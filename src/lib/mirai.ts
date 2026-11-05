@@ -28,6 +28,15 @@ function defaultAnswers(): Answers {
   return a;
 }
 
+/**
+ * デモ動画の撮影モード。?demo か、#demo-result のように demo- で始まる URL で開いた時。
+ * （公開ページでは ? が渡らないので、# の方を使う）
+ */
+export function isDemoMode() {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).has("demo") || window.location.hash.startsWith("#demo");
+}
+
 /** 等級（G〜S）を 0〜7 の数に */
 export function gradeIndex(g: string) {
   return raw.grades.indexOf(g);
@@ -52,7 +61,7 @@ export function useMirai() {
 
   useEffect(() => {
     const read = () => {
-      const h = window.location.hash.replace("#", "") as Step;
+      const h = window.location.hash.replace("#", "").replace(/^demo-/, "") as Step;
       if ((STEPS as readonly string[]).includes(h)) setStep(h);
     };
     read();
@@ -62,7 +71,15 @@ export function useMirai() {
 
   const go = useCallback((s: Step) => {
     setStep(s);
-    if (window.location.hash !== `#${s}`) history.pushState(null, "", `#${s}`);
+    // 撮影用の #demo-〇〇 で開いた時は、段階を移っても demo- を付けたままにする
+    const next = `#${isDemoMode() ? "demo-" : ""}${s}`;
+    if (window.location.hash !== next) {
+      try {
+        history.pushState(null, "", next);
+      } catch {
+        window.location.hash = next;
+      }
+    }
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 

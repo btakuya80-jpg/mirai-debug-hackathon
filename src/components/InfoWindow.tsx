@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { isDemoMode } from "@/lib/mirai";
 
 export type HelpItem = {
   id: string;
@@ -44,17 +45,20 @@ function read<T>(key: string, fallback: T): T {
     return fallback; // 保存が使えない環境でも動く
   }
 }
-const noop = () => () => {};
+function subscribeHash(cb: () => void) {
+  window.addEventListener("hashchange", cb);
+  return () => window.removeEventListener("hashchange", cb);
+}
 
 /**
  * インフォ窓（ⓘ）。この画面／項目の理由／機能一覧／メモ の4つ。
  * 項目を押すと画面側が光る。見出し帯のどこでもつかんで動かせ、8か所で大きさを変えられる。
- * デモ撮影の時は URL に ?demo を付けると出さない。
+ * デモ撮影の時は URL に ?demo を付けるか、#demo-result のように開くと出さない。
  */
 export default function InfoWindow({ screen, screenNote, items, features, onBeforeFlash, accent = "#3a7bd5" }: Props) {
   const [open, setOpen] = useState(false);
-  // ?demo の時は出さない（サーバーでは出さず、ブラウザで判断）
-  const hidden = useSyncExternalStore(noop, () => new URLSearchParams(window.location.search).has("demo"), () => true);
+  // 撮影モード（?demo か #demo-〇〇）の時は出さない。サーバーでは出さず、ブラウザで判断
+  const hidden = useSyncExternalStore(subscribeHash, isDemoMode, () => true);
   const [tab, setTab] = useState<"screen" | "why" | "feat" | "memo">("screen");
   const [box, setBox] = useState<Box>(() =>
     typeof window === "undefined" ? { x: 24, y: 80, w: 360, h: 460 } : clamp(read(POS, { x: window.innerWidth - 396, y: 80, w: 360, h: 460 })),

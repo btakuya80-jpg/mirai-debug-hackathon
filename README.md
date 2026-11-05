@@ -41,6 +41,28 @@ Built with Claude: Japan 2026 の提出作品です。
 - 実在の人名・会社名は使わない（すべて架空）。他社のゲーム作品名・キャラクターも使わない。
 - 企業側の入力画面は今回は作らない（会社データは JSON で用意）。
 
+## 公開ページ（Artifact）で見る
+
+PC に Node が無くても見られるよう、各案を1ファイルの HTML に書き出して claude.ai の Artifact で公開しています（非公開。共有は Artifact の「共有」から）。
+
+| 案 | 公開ページ |
+|---|---|
+| 入口 | https://claude.ai/artifact/NzR9hc7HJbvCGp6gQSEqHP |
+| A案 デバッガー画面風 | https://claude.ai/artifact/RgRuHo2dkGx7oUNWvCbdRj |
+| B案 10年の山 | https://claude.ai/artifact/1w8yVg5TGoJSov4Ufoyvof |
+| C案 ゲームのセーブ画面風 | https://claude.ai/artifact/D2g8JL6xnZ8WRhw4tPzzqT |
+
+公開ページでは `?` が渡らないので、デモ撮影は `#demo-result` のように `demo-` を付けた段階名で開くと、説明窓（ⓘ）が出ません。
+
+書き出し方：
+
+```bash
+npm install
+node scripts/build-standalone.mjs   # → dist-standalone/home.html a.html b.html c.html
+```
+
+React は cdnjs の UMD 版を読み込み、画面のコード・CSS・見本データは HTML の中に入れています。公開ページどうしのリンク先は `standalone/links.json` に書きます。
+
 ## 動かし方
 
 Node.js 20.9 以上が必要です。

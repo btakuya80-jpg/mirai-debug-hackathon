@@ -1,0 +1,4 @@
+@import "../src/app/globals.css";
+@import "../src/app/a/a.css";
+@source "../src";
+@source "./";

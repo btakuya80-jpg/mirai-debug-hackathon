@@ -28,7 +28,7 @@ export const FEATURES = [
   "結果：時点ごとの出来事・能力表・辞めたくなる度合い・分かれ道・上司あり/なし・面接で確かめる質問",
   "2社に入った場合の比べ表示",
   "URLの #job #input #company #run #result #compare で各段階を直接開ける",
-  "URLに ?demo を付けるとⓘ窓を出さない（デモ動画の撮影用）",
+  "URLに ?demo を付けるか、#demo-result のように開くとⓘ窓を出さない（デモ動画の撮影用）",
   "いまはAIにつながず、data/mirai.json の見本データで動く",
 ];
 
