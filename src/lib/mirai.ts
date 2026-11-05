@@ -146,7 +146,8 @@ export function useRunClock(active: boolean, duration = 9000) {
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / duration);
+      // 最初のコマの時刻は start より前のことがあるので、0 未満にしない
+      const p = Math.max(0, Math.min(1, (now - start) / duration));
       setT(p);
       if (p < 1) raf = requestAnimationFrame(tick);
     };

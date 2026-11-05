@@ -1,0 +1,72 @@
+/* D案「未来の履歴書」：紙の書式に、10年先までの職歴が書き込まれていく */
+.vd {
+  --paper: #f7f8f5;
+  --sheet: #ffffff;
+  --rule: #c9d3dc;
+  --ink: #1f2a44;
+  --ink2: #5b6478;
+  --pencil: #8a909c;
+  --seal: #c8382f;
+  --marker: #ffe873;
+  --iw-accent: #c8382f;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100dvh;
+  font-family: var(--font-zenold);
+}
+.vd .hand { font-family: var(--font-klee); }
+.vd .num { font-variant-numeric: lining-nums tabular-nums; }
+
+/* 罫線の入った書式 */
+.vd-sheet {
+  background: var(--sheet);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(31, 42, 68, 0.06), 0 22px 40px -28px rgba(31, 42, 68, 0.45);
+}
+.vd-grid > * { border-color: var(--ink); }
+.vd-label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink2);
+}
+.vd-ruled {
+  background-image: repeating-linear-gradient(transparent 0 35px, var(--rule) 35px 36px);
+  background-position: 0 -1px;
+}
+
+/* 手書きの丸囲み */
+.vd-circle { position: relative; }
+.vd-circle svg { position: absolute; inset: -6px -10px; width: calc(100% + 20px); height: calc(100% + 12px); pointer-events: none; overflow: visible; }
+.vd-circle path { fill: none; stroke: var(--seal); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 260; stroke-dashoffset: 260; animation: vd-draw 0.45s ease-out forwards; }
+@keyframes vd-draw { to { stroke-dashoffset: 0; } }
+
+/* マーカー */
+.vd-marker { background: linear-gradient(transparent 55%, var(--marker) 55%); }
+
+/* はんこ */
+.vd-seal {
+  display: inline-grid; place-items: center;
+  border: 2.5px solid var(--seal); color: var(--seal);
+  border-radius: 999px; font-weight: 900; letter-spacing: 0.05em;
+  transform: rotate(-8deg);
+  animation: vd-stamp 0.35s cubic-bezier(.2,1.6,.4,1) both;
+}
+@keyframes vd-stamp { from { transform: rotate(-8deg) scale(1.8); opacity: 0; } to { transform: rotate(-8deg) scale(1); opacity: 0.92; } }
+
+/* 書き込まれる文字 */
+.vd-write { animation: vd-write 0.6s steps(18) both; overflow: hidden; white-space: nowrap; }
+@keyframes vd-write { from { max-width: 0; } to { max-width: 100%; } }
+.vd-pen::after { content: "✎"; color: var(--seal); margin-left: 4px; animation: vd-blink 0.9s steps(1) infinite; }
+@keyframes vd-blink { 50% { opacity: 0; } }
+
+/* 付箋 */
+.vd-sticky { box-shadow: 0 10px 18px -12px rgba(31,42,68,.55); transform: rotate(var(--r, -1.5deg)); }
+
+.vd-btn-seal {
+  background: var(--seal); color: #fff; border-radius: 999px;
+  box-shadow: 0 0 0 4px var(--sheet), 0 0 0 5.5px var(--seal);
+  transition: transform .15s ease;
+}
+.vd-btn-seal:hover { transform: rotate(-2deg) scale(1.03); }
+.vd-btn-line { border: 1.5px solid var(--ink); background: var(--sheet); }
+.vd-btn-line:hover { background: #eef1f4; }

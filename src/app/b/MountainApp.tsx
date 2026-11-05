@@ -23,7 +23,7 @@ export default function MountainApp() {
     <div className="vb">
       <header className="mx-auto flex max-w-6xl items-center gap-4 px-4 pt-4 sm:px-6">
         <Link href="/" className="text-[14px] font-bold text-[var(--ink2)] hover:text-[var(--ink)]">
-          ← 3案に戻る
+          ← 案の一覧へ
         </Link>
         <span className="text-[15px] font-black">未来デバッグ</span>
         <ol className="ml-auto hidden items-center gap-1 md:flex" aria-label="進み具合">

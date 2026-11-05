@@ -1,0 +1,41 @@
+/* E案「キャリア路線図」：時点は駅、分かれ道は乗り換え。5本の列車が同時に走る */
+.ve {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --ink: #1c2433;
+  --ink2: #5d6878;
+  --rail: #d9dee5;
+  --main: #2b3445;
+  --stay: #1b9e5a;
+  --move: #1f6fd1;
+  --jump: #e8820c;
+  --alert: #e0323c;
+  --iw-accent: #1f6fd1;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100dvh;
+  font-family: var(--font-murecho);
+}
+.ve .cond { font-family: var(--font-barlow); font-variant-numeric: lining-nums tabular-nums; letter-spacing: 0.02em; }
+.ve-card { background: var(--card); border-radius: 14px; box-shadow: 0 1px 2px rgba(28,36,51,.08); }
+.ve-badge {
+  display: inline-grid; place-items: center; min-width: 2.6em; height: 2.6em; padding: 0 0.3em;
+  border: 3px solid currentColor; border-radius: 8px; background: #fff;
+  font-family: var(--font-barlow); font-weight: 700; line-height: 1; color: var(--c, var(--main));
+}
+.ve-band { height: 10px; border-radius: 999px; background: var(--c, var(--main)); }
+.ve-key {
+  border: 2px solid var(--rail); background: var(--card); border-radius: 10px;
+  transition: border-color .15s, transform .1s;
+}
+.ve-key:hover { border-color: var(--ink2); }
+.ve-key:active { transform: translateY(1px); }
+.ve-key[aria-pressed="true"] { border-color: var(--move); background: #eaf2fd; box-shadow: inset 0 -3px 0 var(--move); }
+.ve-go { background: var(--ink); color: #fff; border-radius: 999px; transition: transform .15s; }
+.ve-go:hover { transform: translateY(-1px); }
+.ve-line-draw { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: ve-draw 1.6s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes ve-draw { to { stroke-dashoffset: 0; } }
+.ve-pulse { animation: ve-pulse 1.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes ve-pulse { 50% { transform: scale(1.35); opacity: .55; } }
+.ve-fade { animation: ve-fade .4s ease-out both; }
+@keyframes ve-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

@@ -1,0 +1,50 @@
+/* F案「出発案内板」：未来の時点が、パタパタ（反転フラップ）で表示される */
+.vf {
+  --hall: #dfe2e5;
+  --hall2: #eef0f2;
+  --board: #1b1e25;
+  --cell: #2a2e37;
+  --cell2: #23272f;
+  --text: #f2efe6;
+  --dimt: #8e95a3;
+  --amber: #ffb000;
+  --ok: #39d98a;
+  --warn: #ffd23f;
+  --stop: #ff5a4f;
+  --ink: #1d2129;
+  --ink2: #5a616d;
+  --iw-accent: #ffb000;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--hall2), var(--hall));
+  min-height: 100dvh;
+  font-family: var(--font-biz);
+}
+.vf .osw { font-family: var(--font-oswald); font-variant-numeric: lining-nums tabular-nums; letter-spacing: 0.03em; }
+.vf-board { background: var(--board); color: var(--text); border-radius: 10px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.6), inset 0 0 0 1px #000; }
+.vf-head { color: var(--dimt); font-size: 12px; letter-spacing: 0.08em; }
+
+/* 1文字ずつのフラップ */
+.vf-flap { display: inline-flex; flex-wrap: wrap; gap: 2px; }
+.vf-ch {
+  position: relative; display: inline-grid; place-items: center;
+  min-width: 1.05em; height: 1.45em; padding: 0 0.04em;
+  background: linear-gradient(180deg, var(--cell) 0 49%, #111 49% 51%, var(--cell2) 51%);
+  border-radius: 3px; color: inherit; line-height: 1;
+}
+.vf-ch.sp { background: transparent; min-width: 0.4em; }
+.vf-ch.turn { animation: vf-turn 0.09s linear; }
+@keyframes vf-turn { 0% { transform: scaleY(1); } 50% { transform: scaleY(0.2); } 100% { transform: scaleY(1); } }
+
+.vf-ticket { background: #fffdf8; border-radius: 12px; box-shadow: 0 10px 24px -18px rgba(0,0,0,.45); }
+.vf-perf { background-image: radial-gradient(circle at 0 50%, transparent 7px, #fffdf8 7.5px), radial-gradient(circle at 100% 50%, transparent 7px, #fffdf8 7.5px); }
+.vf-btn { background: var(--amber); color: #1b1e25; border-radius: 8px; box-shadow: 0 3px 0 #b97f00; transition: transform .1s, box-shadow .1s; }
+.vf-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #b97f00; }
+.vf-btn:disabled { opacity: .45; }
+.vf-tile { border: 2px solid #c9cdd2; background: #fff; border-radius: 8px; transition: border-color .15s; }
+.vf-tile:hover { border-color: var(--ink2); }
+.vf-tile[aria-pressed="true"] { background: var(--board); color: var(--amber); border-color: var(--board); }
+.vf-row[aria-pressed="true"] { background: #2f3440; box-shadow: inset 4px 0 0 var(--amber); }
+.vf-blink { animation: vf-blink 1s steps(1) infinite; }
+@keyframes vf-blink { 50% { opacity: .35; } }
+.vf-ticker { white-space: nowrap; animation: vf-ticker 22s linear infinite; }
+@keyframes vf-ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }

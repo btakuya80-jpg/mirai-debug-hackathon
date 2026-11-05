@@ -31,7 +31,7 @@ export default function SaveApp() {
     <div className="vc">
       <header className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 pt-4 sm:px-6">
         <Link href="/" className="dot text-[14px] text-[var(--ink2)] hover:text-[var(--ink)]">
-          ◀ 3案に戻る
+          ◀ 案の一覧へ
         </Link>
         <span className="dot text-[18px]">未来デバッグ</span>
         <nav className="ml-auto flex flex-wrap gap-1.5" aria-label="進み具合">

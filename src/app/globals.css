@@ -7,6 +7,12 @@
   --font-brico: "Bricolage Grotesque", "Zen Kaku Gothic New", sans-serif;
   --font-dot: "DotGothic16", "M PLUS Rounded 1c", monospace;
   --font-round: "M PLUS Rounded 1c", system-ui, sans-serif;
+  --font-klee: "Klee One", "Zen Old Mincho", serif;
+  --font-zenold: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+  --font-murecho: "Murecho", system-ui, sans-serif;
+  --font-barlow: "Barlow Condensed", "Murecho", sans-serif;
+  --font-biz: "BIZ UDGothic", system-ui, sans-serif;
+  --font-oswald: "Oswald", "BIZ UDGothic", sans-serif;
 }
 
 [hidden] { display: none !important; }

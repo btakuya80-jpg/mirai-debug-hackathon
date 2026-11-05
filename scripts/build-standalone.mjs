@@ -1,11 +1,11 @@
 // 各案を「1ファイルのHTML」に書き出す（claude.ai の Artifact で公開するため）。
 //   node scripts/build-standalone.mjs
-//   → dist-standalone/home.html, a.html, b.html, c.html
+//   → dist-standalone/home.html, a.html〜f.html
 // React は cdnjs の UMD 版から読み込み、それ以外（画面のコード・CSS・見本データ）は中に入れる。
 // 公開ページどうしのリンク先は standalone/links.json（無ければ同じフォルダの .html）を使う。
 //
 //   node scripts/build-standalone.mjs --one
-//   → dist-one/index.html（入口）＋ a.html, b.html, c.html を「1つの Artifact」にまとめて公開する形で書き出す。
+//   → dist-one/index.html（入口）＋ a.html〜f.html を「1つの Artifact」にまとめて公開する形で書き出す。
 //     入口から3案へは相対リンク（a.html など）、各案から入口へは ./ で戻る。
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
@@ -28,6 +28,12 @@ const FONTS =
     "family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800",
     "family=DotGothic16",
     "family=M+PLUS+Rounded+1c:wght@400;500;800",
+    "family=Klee+One:wght@400;600",
+    "family=Zen+Old+Mincho:wght@400;700;900",
+    "family=Murecho:wght@400;700;900",
+    "family=Barlow+Condensed:wght@500;700",
+    "family=BIZ+UDGothic:wght@400;700",
+    "family=Oswald:wght@500;700",
   ].join("&") +
   "&display=swap";
 
@@ -36,20 +42,23 @@ const PAGES = [
   { id: "a", title: "未来デバッグ A案", bg: "#12161d", scheme: "dark" },
   { id: "b", title: "未来デバッグ B案", bg: "#e9f2fb", scheme: "light" },
   { id: "c", title: "未来デバッグ C案", bg: "#e9e4ff", scheme: "light" },
+  { id: "d", title: "未来デバッグ D案", bg: "#f7f8f5", scheme: "light" },
+  { id: "e", title: "未来デバッグ E案", bg: "#f4f6f8", scheme: "light" },
+  { id: "f", title: "未来デバッグ F案", bg: "#e5e8eb", scheme: "light" },
 ];
 
 const linksFile = resolve(root, "standalone/links.json");
 const links = ONE
-  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html" }
+  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html" }
   : existsSync(linksFile)
   ? JSON.parse(readFileSync(linksFile, "utf8"))
-  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html" };
+  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html" };
 
 for (const p of PAGES) {
   const js = await build({
     entryPoints: [resolve(root, `standalone/${p.id}.tsx`)],
     bundle: true,
-    minify: true,
+    minify: !process.env.NOMIN,
     write: false,
     format: "iife",
     target: "es2019",
