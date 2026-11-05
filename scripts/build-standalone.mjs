@@ -3,6 +3,10 @@
 //   → dist-standalone/home.html, a.html, b.html, c.html
 // React は cdnjs の UMD 版から読み込み、それ以外（画面のコード・CSS・見本データ）は中に入れる。
 // 公開ページどうしのリンク先は standalone/links.json（無ければ同じフォルダの .html）を使う。
+//
+//   node scripts/build-standalone.mjs --one
+//   → dist-one/index.html（入口）＋ a.html, b.html, c.html を「1つの Artifact」にまとめて公開する形で書き出す。
+//     入口から3案へは相対リンク（a.html など）、各案から入口へは ./ で戻る。
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -10,7 +14,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const out = resolve(root, "dist-standalone");
+const ONE = process.argv.includes("--one");
+const out = resolve(root, ONE ? "dist-one" : "dist-standalone");
 mkdirSync(out, { recursive: true });
 
 const REACT = "18.3.1";
@@ -34,7 +39,9 @@ const PAGES = [
 ];
 
 const linksFile = resolve(root, "standalone/links.json");
-const links = existsSync(linksFile)
+const links = ONE
+  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html" }
+  : existsSync(linksFile)
   ? JSON.parse(readFileSync(linksFile, "utf8"))
   : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html" };
 
@@ -66,8 +73,10 @@ for (const p of PAGES) {
   });
   const css = readFileSync(cssOut, "utf8");
 
-  // Artifact は <!doctype>/<html>/<head>/<body> を自分で付けるので、中身だけを書く
-  const html = `<title>${p.title}</title>
+  // Artifact は入口のページにだけ <!doctype>/<html>/<head>/<body> を付ける。
+  // まとめて公開する時の3案（a.html など）は、自分で完全な HTML にする。
+  const full = ONE && p.id !== "home";
+  const body = `<title>${p.title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${FONTS}">
@@ -82,6 +91,21 @@ ${css}
 <script>window.__MIRAI_LINKS=${JSON.stringify(links)};</script>
 <script>${code}</script>
 `;
-  writeFileSync(resolve(out, `${p.id}.html`), html);
-  console.log(`${p.id}.html  ${(html.length / 1024).toFixed(0)}KB`);
+  const cut = body.indexOf('<div id="root">');
+  const html = full
+    ? `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+${body.slice(0, cut)}</head>
+<body>
+${body.slice(cut)}</body>
+</html>
+`
+    : body;
+  const name = ONE && p.id === "home" ? "index" : p.id;
+  writeFileSync(resolve(out, `${name}.html`), html);
+  console.log(`${name}.html  ${(html.length / 1024).toFixed(0)}KB`);
 }

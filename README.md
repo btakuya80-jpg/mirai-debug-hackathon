@@ -43,14 +43,12 @@ Built with Claude: Japan 2026 の提出作品です。
 
 ## 公開ページ（Artifact）で見る
 
-PC に Node が無くても見られるよう、各案を1ファイルの HTML に書き出して claude.ai の Artifact で公開しています（非公開。共有は Artifact の「共有」から）。
+PC に Node が無くても見られるよう、各案を HTML に書き出して claude.ai の Artifact で公開しています。
+**1つのURLにまとめてあり、入口から A・B・C の3案へ進めます。**
 
-| 案 | 公開ページ |
-|---|---|
-| 入口 | https://claude.ai/artifact/NzR9hc7HJbvCGp6gQSEqHP |
-| A案 デバッガー画面風 | https://claude.ai/artifact/RgRuHo2dkGx7oUNWvCbdRj |
-| B案 10年の山 | https://claude.ai/artifact/1w8yVg5TGoJSov4Ufoyvof |
-| C案 ゲームのセーブ画面風 | https://claude.ai/artifact/D2g8JL6xnZ8WRhw4tPzzqT |
+https://claude.ai/artifact/K6R6pgL3hXhuYGpPqUJzyj
+
+（他の人に見せる時は、Artifact の「共有」から共有してください）
 
 公開ページでは `?` が渡らないので、デモ撮影は `#demo-result` のように `demo-` を付けた段階名で開くと、説明窓（ⓘ）が出ません。
 
@@ -58,7 +56,8 @@ PC に Node が無くても見られるよう、各案を1ファイルの HTML �
 
 ```bash
 npm install
-node scripts/build-standalone.mjs   # → dist-standalone/home.html a.html b.html c.html
+node scripts/build-standalone.mjs --one   # → dist-one/index.html（入口）＋ a.html b.html c.html を1つの Artifact に
+node scripts/build-standalone.mjs         # → dist-standalone/ に各案を別々のページとして
 ```
 
 React は cdnjs の UMD 版を読み込み、画面のコード・CSS・見本データは HTML の中に入れています。公開ページどうしのリンク先は `standalone/links.json` に書きます。
