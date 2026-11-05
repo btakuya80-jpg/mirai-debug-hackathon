@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "JetBrains Mono", "IBM Plex Sans JP", ui-monospace, monospace;
+  --font-plex: "IBM Plex Sans JP", system-ui, sans-serif;
+  --font-zen: "Zen Kaku Gothic New", system-ui, sans-serif;
+  --font-brico: "Bricolage Grotesque", "Zen Kaku Gothic New", sans-serif;
+  --font-dot: "DotGothic16", "M PLUS Rounded 1c", monospace;
+  --font-round: "M PLUS Rounded 1c", system-ui, sans-serif;
+}
+
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--font-plex); overflow-x: hidden; }
+*:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.w { display: inline-block; }
+p, li { text-wrap: pretty; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* ===== インフォ窓（3案共通） ===== */
+.iw-fab {
+  position: fixed; right: 16px; bottom: 16px; z-index: 80;
+  width: 40px; height: 40px; border-radius: 999px; border: 0;
+  background: #1d2533; color: #fff; font: 700 17px/1 Georgia, serif; font-style: italic;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25); cursor: pointer;
+}
+.iw-win {
+  position: fixed; z-index: 90; display: flex; flex-direction: column;
+  background: #fbfbfa; color: #1d2533; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(10,20,40,.35); font: 13px/1.6 var(--font-plex);
+}
+.iw-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1d2533; color: #fff; cursor: move; user-select: none; }
+.iw-head button { background: none; border: 0; color: #fff; font-size: 18px; cursor: pointer; }
+.iw-tabs { display: flex; gap: 2px; padding: 6px 6px 0; background: #eef0f3; }
+.iw-tabs button { flex: 1; padding: 6px 4px; border: 0; background: transparent; border-radius: 6px 6px 0 0; cursor: pointer; font: inherit; color: #4a5568; }
+.iw-tabs button[aria-pressed="true"] { background: #fbfbfa; color: #1d2533; font-weight: 700; }
+.iw-body { padding: 12px; overflow: auto; flex: 1; }
+.iw-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.iw-item { border: 0; background: none; padding: 0; font: 700 13px var(--font-plex); color: var(--iw-accent); cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+.iw-list p { margin: 2px 0 0; }
+.iw-why { color: #2d3748; }
+.iw-src { color: #718096; font-size: 12px; }
+.iw-miss { background: #fff4e5; padding: 8px; border-radius: 6px; }
+.iw-miss button { margin-left: 6px; }
+.iw-feat { margin: 0; padding-left: 18px; }
+.iw-memo { display: grid; gap: 8px; }
+.iw-memo label { display: grid; gap: 2px; font-size: 12px; color: #4a5568; }
+.iw-memo select, .iw-memo input, .iw-memo textarea { font: inherit; padding: 6px; border: 1px solid #cbd2dc; border-radius: 6px; background: #fff; }
+.iw-memo textarea { min-height: 80px; }
+.iw-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.iw-file { display: inline-block !important; padding: 6px 10px; border: 1px dashed #a0aec0; border-radius: 6px; cursor: pointer; }
+.iw-file input { display: none; }
+.iw-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; }
+.iw-save { margin-left: auto; padding: 6px 12px; border: 0; border-radius: 6px; background: var(--iw-accent); color: #fff; cursor: pointer; font: 700 13px var(--font-plex); }
+.iw-memos { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 6px; }
+.iw-memos li { background: #eef0f3; padding: 6px 8px; border-radius: 6px; }
+.iw-memos p { margin: 0; }
+.iw-edge { position: absolute; z-index: 2; }
+.iw-n, .iw-s { left: 7px; right: 7px; height: 7px; cursor: ns-resize; }
+.iw-n { top: 0; } .iw-s { bottom: 0; }
+.iw-e, .iw-w { top: 7px; bottom: 7px; width: 7px; cursor: ew-resize; }
+.iw-e { right: 0; } .iw-w { left: 0; }
+.iw-ne, .iw-nw, .iw-se, .iw-sw { width: 12px; height: 12px; }
+.iw-ne { top: 0; right: 0; cursor: nesw-resize; } .iw-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.iw-nw { top: 0; left: 0; cursor: nwse-resize; } .iw-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.iw-flash { animation: iwflash 2.4s ease-out; border-radius: 6px; }
+@keyframes iwflash {
+  0%, 30% { box-shadow: 0 0 0 4px var(--iw-accent, #3a7bd5), 0 0 0 10px color-mix(in srgb, var(--iw-accent, #3a7bd5) 30%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
