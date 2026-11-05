@@ -1,0 +1,54 @@
+/* A案「デバッガー画面風」 */
+.va {
+  --bg: #12161d;
+  --panel: #171c25;
+  --panel2: #1c2330;
+  --line: #273041;
+  --text: #cfd8e3;
+  --dim: #6f7f94;
+  --blue: #6cb6ff;
+  --red: #ff6b6b;
+  --amber: #f5c266;
+  --green: #7bd88f;
+  --violet: #c49bff;
+  --iw-accent: #6cb6ff;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-plex);
+  min-height: 100dvh;
+}
+.va .mono { font-family: var(--font-mono); }
+.va .gut { color: #3f4b5e; font-family: var(--font-mono); user-select: none; text-align: right; }
+.va .bp { width: 12px; height: 12px; border-radius: 999px; background: var(--red); box-shadow: 0 0 0 3px rgba(255,107,107,.18); }
+.va .bp.off { background: transparent; border: 1.5px solid #4a5568; box-shadow: none; }
+.va .bp.hit { background: var(--amber); box-shadow: 0 0 0 4px rgba(245,194,102,.25); }
+.va .kw { color: var(--violet); }
+.va .str { color: #a5d6a7; }
+.va .cm { color: var(--dim); }
+.va .num { color: var(--amber); }
+
+.va-run-btn { position: relative; overflow: hidden; }
+.va-run-btn::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%);
+  transform: translateX(-100%); animation: va-sheen 2.8s ease-in-out infinite 1s;
+}
+@keyframes va-sheen { to { transform: translateX(100%); } }
+
+.va-caret::after { content: "▍"; color: var(--blue); animation: va-blink 1s steps(1) infinite; margin-left: 2px; }
+@keyframes va-blink { 50% { opacity: 0; } }
+
+.va-line-in { animation: va-in .28s ease-out both; }
+@keyframes va-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+
+.va-warn-pulse { animation: va-warn 1.4s ease-in-out infinite; }
+@keyframes va-warn { 50% { box-shadow: 0 0 0 6px rgba(255,107,107,.15); } }
+
+.va-scan {
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+}
+.va-branch-path { stroke-dasharray: 600; stroke-dashoffset: 600; animation: va-draw 1.4s ease-out forwards; }
+@keyframes va-draw { to { stroke-dashoffset: 0; } }
+
+.va-tab[aria-current="true"] { background: var(--bg); color: var(--text); border-top: 2px solid var(--blue); }
+.va-scroll { scrollbar-width: thin; scrollbar-color: #2c3647 transparent; }
