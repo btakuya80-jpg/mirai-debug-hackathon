@@ -45,14 +45,15 @@ const PAGES = [
   { id: "d", title: "未来デバッグ D案", bg: "#f7f8f5", scheme: "light" },
   { id: "e", title: "未来デバッグ E案", bg: "#f4f6f8", scheme: "light" },
   { id: "f", title: "未来デバッグ F案", bg: "#e5e8eb", scheme: "light" },
+  { id: "g", title: "未来デバッグ G案", bg: "#f3ebdc", scheme: "light" },
 ];
 
 const linksFile = resolve(root, "standalone/links.json");
 const links = ONE
-  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html" }
+  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html" }
   : existsSync(linksFile)
   ? JSON.parse(readFileSync(linksFile, "utf8"))
-  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html" };
+  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html" };
 
 for (const p of PAGES) {
   const js = await build({

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import data from "@/data/mirai.json";
 import Sprite from "./c/Sprite";
+import { Backdrop, Chibi, Desk } from "./g/Chibi";
 
 const PLANS = [
   {
@@ -38,6 +39,12 @@ const PLANS = [
     name: "F案　出発案内板",
     aim: "空港や駅の案内板のように、文字がパタパタとめくれて未来の出来事や辞めたくなる度合いが表示される。動きでデモ動画に映える。",
     tone: "bg-[#1b1e25] text-[#f2efe6]",
+  },
+  {
+    href: "/g",
+    name: "G案　働く姿が見える育成シミュレーション風",
+    aim: "分身のちびキャラが職場でパソコンを打ち、荷物を運び、上司に呼ばれる。カレンダーがめくれて出来事が起き、力の＋−ときもちのアイコンで変化を見せる。",
+    tone: "bg-[#f3ebdc] text-[#2b2a2f]",
   },
 ];
 
@@ -98,6 +105,21 @@ function PreviewF() {
   );
 }
 
+function PreviewG() {
+  return (
+    <svg viewBox="150 130 340 130" className="h-auto w-full" aria-hidden>
+      <Backdrop bg="office" />
+      <g transform="translate(260,250)">
+        <Chibi look={{ hair: "#3a2a20", shirt: "#20a39e", style: "short" }} pose="type" mood="元気" />
+      </g>
+      <g transform="translate(400,250)">
+        <Chibi look={{ hair: "#23262d", shirt: "#3b4a6b", style: "spiky", glasses: true }} pose="teach" flip />
+      </g>
+      <Desk x={260} />
+    </svg>
+  );
+}
+
 function PreviewA() {
   return (
     <div className="font-mono text-[12px] leading-6">
@@ -125,7 +147,7 @@ export default function Home() {
   return (
     <main className="min-h-dvh bg-[#f2f4f7] text-[#1b2330]">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
-        <p className="text-[14px] font-medium text-[#56627a]">Built with Claude: Japan 2026 提出作品　デザイン6案の比較用モック</p>
+        <p className="text-[14px] font-medium text-[#56627a]">Built with Claude: Japan 2026 提出作品　デザイン7案の比較用モック</p>
         <h1 className="mt-3 text-[40px] leading-tight font-bold tracking-tight sm:text-[64px]">
           <span className="w">未来デバッグ</span>
         </h1>
@@ -135,7 +157,7 @@ export default function Home() {
         </p>
         <p className="mt-4 max-w-[60ch] text-[15px] leading-8 text-[#3d4759]">
           求職者の分身と、仮想の会社・上司・同僚をAIでつくり、1か月後・3か月後・1年後・3年後・10年後にどうなるかを何度も試走します。
-          6案とも同じ見本データ・同じ画面の流れです。見た目だけを変えています。
+          7案とも同じ見本データ・同じ画面の流れです。見た目だけを変えています。
         </p>
 
         <ul className="mt-10 grid gap-5 md:grid-cols-3">
@@ -148,6 +170,7 @@ export default function Home() {
                   {i === 3 && <PreviewD />}
                   {i === 4 && <PreviewE />}
                   {i === 5 && <PreviewF />}
+                  {i === 6 && <PreviewG />}
                   {i === 2 && (
                     <div className="flex items-end gap-4">
                       <Sprite size={64} level={0} />
