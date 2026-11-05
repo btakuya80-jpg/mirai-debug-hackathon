@@ -1,0 +1,93 @@
+/* I案「人生のすごろく盤」：刷り物のような紙の地と、太い墨の線、赤・黄・青・緑。文字は Yusei Magic と BIZ UDゴシック */
+.i {
+  --lf-bg: #f6efe2;
+  --lf-ink: #1f1b16;
+  --lf-sub: #6a5f50;
+  --lf-accent: #e23d28;
+  --lf-card: #fffaf0;
+  --lf-line: #1f1b16;
+  --lf-radius: 16px;
+  --lf-shadow: 4px 5px 0 #1f1b16;
+  --lf-font-h: var(--font-yusei);
+  --lf-font-n: var(--font-yusei);
+  --lf-on: #2d6cdf;
+  background-color: var(--lf-bg);
+  background-image: radial-gradient(rgba(31, 27, 22, 0.08) 1px, transparent 1.2px);
+  background-size: 9px 9px;
+}
+.i .lf-card { border: 2.5px solid var(--lf-ink); }
+.i .lf-btn { border: 2.5px solid var(--lf-ink); box-shadow: 3px 4px 0 var(--lf-ink); border-radius: 14px; }
+.i .lf-btn:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var(--lf-ink); }
+.i .lf-chip, .i .lf-branch, .i .lf-tick, .i .lf-input { border-color: var(--lf-ink); }
+.i .lf-tag { background: #f2b824; border: 1.5px solid var(--lf-ink); }
+.i .lf-grade { border: 1.5px solid var(--lf-ink); background: #fffaf0; }
+.i .lf-grade.is-up { background: #2e9d5b; color: #fff; }
+.i .lf-grade.is-down { background: #e23d28; color: #fff; }
+.i .lf-meter i { border: 1.5px solid var(--lf-ink); height: 10px; background: #fffaf0; }
+.i .lf-meter i.on { background: #2d6cdf; }
+.i-top { background: #f2b824; border-bottom: 3px solid var(--lf-ink); }
+.i-logo { letter-spacing: 0.02em; }
+.i-thumb { background: #fffaf0; border-bottom: 2.5px solid var(--lf-ink); }
+.i-boardtxt { font-family: var(--font-yusei); }
+.i-board { background: #f6efe2; }
+
+.i-mover { transition: transform 0.9s cubic-bezier(0.4, 0, 0.3, 1); }
+.i-bob { animation: i-bob 1.6s ease-in-out infinite; }
+.i-hopping { animation: i-hop 0.6s ease-in-out infinite; }
+.i-down { transform: translateY(4px); }
+.i-swing { animation: i-swing 0.45s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 0% 100%; }
+.i-tap { animation: i-tap 0.25s ease-in-out infinite alternate; }
+.i-cheer { animation: i-tap 0.35s ease-in-out infinite alternate; }
+.i-belt { animation: i-belt 2.2s linear infinite; }
+.i-steam { animation: i-steam 1.8s ease-in-out infinite; }
+@keyframes i-bob { 50% { transform: translateY(-2px); } }
+@keyframes i-hop { 50% { transform: translateY(-10px); } }
+@keyframes i-swing { from { transform: rotate(-10deg); } to { transform: rotate(12deg); } }
+@keyframes i-tap { to { transform: translateY(3px); } }
+@keyframes i-belt { from { transform: translateX(-20px); } to { transform: translateX(20px); } }
+@keyframes i-steam { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-8px); } }
+
+.i-piece { transition: transform 0.8s cubic-bezier(0.3, 0, 0.2, 1); }
+.i-pieceHop { animation: i-hop 1.6s ease-in-out infinite; }
+.i-tile.is-can { cursor: pointer; }
+.i-tile.is-can:hover circle, .i-tile.is-can:hover rect, .i-tile.is-can:hover path { stroke-width: 4; }
+.i-tile.is-pulse { animation: i-pulse 1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes i-pulse { 50% { transform: scale(1.18); } }
+
+.i-card { position: relative; overflow: hidden; border: 2.5px solid var(--lf-ink); border-radius: 16px; background: var(--lf-card); box-shadow: 4px 5px 0 var(--lf-ink); animation: i-deal 0.5s cubic-bezier(0.3, 1.3, 0.5, 1) both; }
+@keyframes i-deal { from { transform: translateY(-14px) rotate(-2deg); opacity: 0; } }
+.i-cardhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; padding: 8px 14px; border-bottom: 2.5px solid var(--lf-ink); background: #fff3d6; }
+.i-badge { margin-left: auto; padding: 1px 10px; border: 2px solid var(--lf-ink); border-radius: 999px; background: #f2b824; font-size: 12px; font-weight: 700; }
+.i-badge.is-blue { background: #8fb2e8; }
+.i-balloon {
+  position: absolute; transform: translateX(-50%); max-width: 52%; padding: 0.3em 0.75em 0.4em; border: 2.5px solid var(--lf-ink); border-radius: 18px 18px 18px 4px;
+  background: #fff; font-size: clamp(10.5px, 2.1vw, 13.5px); font-weight: 700; line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  animation: i-pop 0.35s cubic-bezier(0.3, 1.7, 0.5, 1) both;
+}
+.i-balloon.is-me { background: #ffe1da; }
+.i-balloon b { margin-right: 0.4em; font-size: 0.85em; color: var(--lf-accent); }
+@keyframes i-pop { from { opacity: 0; transform: translateX(-50%) scale(0.4); } }
+.i-life { position: absolute; left: 10px; bottom: 10px; max-width: 80%; padding: 4px 12px; border: 2.5px solid var(--lf-ink); border-radius: 10px; background: #ffd6e1; font-weight: 700; font-size: 13px; animation: i-pop2 0.4s 0.8s both; }
+@keyframes i-pop2 { from { opacity: 0; transform: translateY(8px); } }
+
+/* カットイン：できごとカードがめくれる */
+.i-cut { position: absolute; inset: 0; display: grid; place-items: center; padding: 10px; background: rgba(31, 27, 22, 0.45); cursor: pointer; perspective: 900px; }
+.i-cutcard { display: grid; justify-items: center; gap: 4px; max-width: 88%; padding: 12px 22px 16px; border: 3px solid var(--lf-ink); border-radius: 18px; background: #fffaf0; box-shadow: 6px 7px 0 var(--lf-ink); animation: i-flip 0.6s cubic-bezier(0.3, 1.2, 0.5, 1) both; }
+@keyframes i-flip { from { transform: rotateY(-100deg) scale(0.8); } to { transform: none; } }
+.i-cutkind { padding: 2px 14px; border: 2px solid var(--lf-ink); border-radius: 999px; background: #f2b824; font-size: 14px; }
+.kind-ピンチ .i-cutkind { background: #8fb2e8; }
+.kind-立ち上がる .i-cutkind { background: #7fd19b; }
+.kind-人生のできごと .i-cutkind { background: #ffb3c7; }
+.i-rank { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; padding: 12px; background: rgba(255, 250, 240, 0.78); cursor: pointer; }
+.i-stamp { justify-self: center; display: grid; place-items: center; width: 7.4rem; height: 7.4rem; border: 6px double #e23d28; border-radius: 50%; color: #e23d28; font-size: 24px; line-height: 1.1; transform: rotate(-12deg); animation: i-stamp 0.45s cubic-bezier(0.2, 1.6, 0.5, 1) both; background: rgba(255, 255, 255, 0.6); }
+@keyframes i-stamp { from { transform: rotate(-12deg) scale(2.4); opacity: 0; } }
+.i-chip { padding: 3px 10px; border: 2px solid var(--lf-ink); border-radius: 999px; background: #7fd19b; font-size: 13px; font-weight: 700; animation: i-pop3 0.35s cubic-bezier(0.3, 1.7, 0.5, 1) both; }
+@keyframes i-pop3 { from { transform: scale(0.3); opacity: 0; } }
+
+.i-dice { position: relative; display: inline-block; width: 26px; height: 26px; border: 2.5px solid var(--lf-ink); border-radius: 6px; background: #fff; }
+.i-dice i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--lf-ink); }
+.i-dice i:nth-child(1) { left: 4px; top: 4px; }
+.i-dice i:nth-child(2) { left: 8.5px; top: 8.5px; }
+.i-dice i:nth-child(3) { right: 4px; bottom: 4px; }
+.i-dice.is-rolling { animation: i-roll 0.85s cubic-bezier(0.3, 0, 0.4, 1); }
+@keyframes i-roll { 0% { transform: rotate(0); } 60% { transform: rotate(540deg) scale(1.2); } 100% { transform: rotate(720deg); } }

@@ -1,0 +1,54 @@
+/* H・I・J案で共通の部品の形。色・角・影・文字は各案の変数で変える */
+.lf {
+  --lf-bg: #f4f1ea;
+  --lf-ink: #222;
+  --lf-sub: #666;
+  --lf-accent: #d9480f;
+  --lf-card: #fff;
+  --lf-line: #ddd;
+  --lf-radius: 14px;
+  --lf-shadow: 0 10px 30px -22px rgba(0, 0, 0, 0.45);
+  --lf-font-h: var(--font-biz);
+  --lf-font-b: var(--font-biz);
+  --lf-font-n: var(--font-biz);
+  --lf-on: var(--lf-accent);
+  --lf-on-ink: #fff;
+  color: var(--lf-ink);
+  background: var(--lf-bg);
+  min-height: 100dvh;
+  font-family: var(--lf-font-b);
+}
+.lf-h { font-family: var(--lf-font-h); font-weight: 700; }
+.lf-num { font-family: var(--lf-font-n); font-weight: 700; }
+.lf-card { background: var(--lf-card); border-radius: var(--lf-radius); box-shadow: var(--lf-shadow); border: 1px solid var(--lf-line); }
+.lf-job { transition: transform 0.15s, box-shadow 0.15s; }
+.lf-job:hover { transform: translateY(-2px); }
+.lf-job.is-on { outline: 3px solid var(--lf-accent); outline-offset: 2px; }
+.lf-btn { background: var(--lf-accent); color: var(--lf-on-ink); border-radius: calc(var(--lf-radius) * 0.7); font-weight: 700; font-family: var(--lf-font-h); }
+.lf-btn:disabled { opacity: 0.4; }
+.lf-btn2 { background: transparent; color: var(--lf-ink); border: 2px solid var(--lf-line); border-radius: calc(var(--lf-radius) * 0.7); font-weight: 700; }
+.lf-input { border: 2px solid var(--lf-line); border-radius: calc(var(--lf-radius) * 0.6); background: var(--lf-card); color: var(--lf-ink); }
+.lf-tag { border-radius: 999px; background: color-mix(in srgb, var(--lf-accent) 14%, transparent); color: var(--lf-ink); }
+.lf-chip { border-radius: 999px; border: 2px solid var(--lf-line); background: var(--lf-card); font-weight: 700; }
+.lf-chip[aria-pressed="true"] { background: var(--lf-on); border-color: var(--lf-on); color: var(--lf-on-ink); }
+.lf-range { accent-color: var(--lf-accent); }
+.lf-grade { display: inline-grid; place-items: center; min-width: 1.7rem; height: 1.5rem; border-radius: 6px; font-weight: 800; font-family: var(--lf-font-n); background: color-mix(in srgb, var(--lf-ink) 7%, transparent); }
+.lf-grade.is-up { background: #2f9e5b; color: #fff; }
+.lf-grade.is-down { background: #d6453d; color: #fff; }
+.lf-meter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.lf-meter i { height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--lf-ink) 12%, transparent); }
+.lf-meter i.on { background: var(--lf-accent); }
+.lf-branch { border-radius: calc(var(--lf-radius) * 0.7); border: 2px solid var(--lf-line); background: var(--lf-card); transition: border-color 0.15s, transform 0.15s; }
+.lf-branch:hover { border-color: var(--lf-accent); transform: translateY(-2px); }
+.lf-debug { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.lf-tick { border-radius: 999px; border: 1.5px solid var(--lf-line); background: var(--lf-card); color: var(--lf-ink); font-weight: 700; }
+.lf-tick[aria-current="true"] { background: var(--lf-ink); color: var(--lf-card); border-color: var(--lf-ink); }
+.lf-tick:disabled { opacity: 0.35; }
+.lf-rewind { border-radius: 999px; border: 2px dashed var(--lf-accent); color: var(--lf-accent); font-weight: 700; background: transparent; }
+.lf-save.is-dim { opacity: 0.62; }
+.lf-scroll { scrollbar-width: thin; }
+.lf-stepnav button { border-radius: 999px; }
+.lf-stepnav button[aria-current="true"] { background: var(--lf-ink); color: var(--lf-card); }
+@media (prefers-reduced-motion: reduce) {
+  .lf * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}

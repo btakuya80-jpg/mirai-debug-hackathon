@@ -28,6 +28,7 @@ const FONTS =
     "family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800",
     "family=DotGothic16",
     "family=M+PLUS+Rounded+1c:wght@400;500;800",
+    "family=Yusei+Magic",
     "family=Klee+One:wght@400;600",
     "family=Zen+Old+Mincho:wght@400;700;900",
     "family=Murecho:wght@400;700;900",
@@ -46,16 +47,20 @@ const PAGES = [
   { id: "e", title: "未来デバッグ E案", bg: "#f4f6f8", scheme: "light" },
   { id: "f", title: "未来デバッグ F案", bg: "#e5e8eb", scheme: "light" },
   { id: "g", title: "未来デバッグ G案", bg: "#f3ebdc", scheme: "light" },
+  { id: "h", title: "未来デバッグ H案", bg: "#eaf4ef", scheme: "light" },
+  { id: "i", title: "未来デバッグ I案", bg: "#f6efe2", scheme: "light" },
+  { id: "j", title: "未来デバッグ J案", bg: "#0e0d0c", scheme: "dark" },
 ];
 
 const linksFile = resolve(root, "standalone/links.json");
 const links = ONE
-  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html" }
+  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/h": "h.html", "/i": "i.html", "/j": "j.html" }
   : existsSync(linksFile)
   ? JSON.parse(readFileSync(linksFile, "utf8"))
-  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html" };
+  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/h": "h.html", "/i": "i.html", "/j": "j.html" };
 
-for (const p of PAGES) {
+const ONLY_IDS = process.env.ONLY ? process.env.ONLY.split(",") : null;
+for (const p of PAGES.filter((x) => !ONLY_IDS || ONLY_IDS.includes(x.id))) {
   const js = await build({
     entryPoints: [resolve(root, `standalone/${p.id}.tsx`)],
     bundle: true,

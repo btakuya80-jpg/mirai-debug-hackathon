@@ -18,6 +18,7 @@ const FONTS =
     "family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800",
     "family=DotGothic16",
     "family=M+PLUS+Rounded+1c:wght@400;500;800",
+    "family=Yusei+Magic",
     "family=Klee+One:wght@400;600",
     "family=Zen+Old+Mincho:wght@400;700;900",
     "family=Murecho:wght@400;700;900",
