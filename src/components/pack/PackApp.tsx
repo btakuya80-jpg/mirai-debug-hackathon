@@ -587,6 +587,66 @@ function Bubble({ s, talk, sx, review, k }: { s: LifeState; talk: Talk; sx: numb
   );
 }
 
+/* ---------- 人物の立ち位置と向き（2026-11-06 第3弾） ----------
+   絵はどれも右向き（顔が画面の右を向く）で描かれている。左を向かせる時は左右反転して使う。
+   動く時は歩く向きを向き、話す時は相手の方を、聞く時は話す人の方を向く。傾ける演出は使わない。 */
+type Pos = Record<string, number>;
+const WALK_MS = 1300;
+const dirTo = (from: number, to: number): 1 | -1 => (to >= from ? 1 : -1);
+
+function Actors({ c, s, cast, prev, cur, talk, meMood, meAct, review, reduced, partner }: { c: Ctx; s: LifeState; cast: Who[]; prev: Pos; cur: Pos; talk: Talk | null; meMood: Mood; meAct: string; review?: Set<string>; reduced: boolean; partner?: Who }) {
+  const [go, setGo] = useState(reduced);
+  const [arrived, setArrived] = useState(reduced);
+  useEffect(() => {
+    if (reduced) return;
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setGo(true)));
+    const t = window.setTimeout(() => setArrived(true), WALK_MS + 120);
+    return () => {
+      cancelAnimationFrame(r);
+      clearTimeout(t);
+    };
+  }, [reduced]);
+  const pos = go ? cur : prev;
+  const all: Who[] = ["me", ...cast];
+  const think = !!talk?.text.startsWith("（");
+  const listener: Who | null = talk && !think ? (talk.to ?? (talk.who === "me" ? (cast[0] ?? partner ?? null) : "me")) : null;
+  const moving = (w: Who) => !arrived && Math.abs((cur[w] ?? 0) - (prev[w] ?? 0)) > 0.5;
+  const face = (w: Who): 1 | -1 => {
+    if (moving(w)) return dirTo(prev[w], cur[w]);
+    if (talk && !think && listener) {
+      const other = w === talk.who ? listener : w === listener ? talk.who : null;
+      if (other && cur[other] != null) return dirTo(cur[w], cur[other]);
+      if (other) return 1; /* 絵のない相手（家族など）は画面の右にいる扱い */
+    }
+    if (w === "me") return cast.length ? dirTo(cur.me, cur[cast[0]]) : 1;
+    return dirTo(cur[w], cur.me);
+  };
+  const shown = arrived ? talk : null;
+  /* 絵のない相手（家族・現地の仲間・教え子）は、画面の右に名札で立たせる */
+  const off = shown && !think ? ([shown.who, listener].find((w) => w && w !== "me" && cur[w] == null) ?? null) : null;
+  return (
+    <>
+      {off && (
+        <span className="pk-offstage" style={{ left: "84%" }}>
+          <b>{nameOf(s.job, off)}</b>
+        </span>
+      )}
+      {all.map((w) => {
+        const isMe = w === "me";
+        const src = isMe ? meArt(c.look, meMood) : whoArt(w, c.look, "普通")!;
+        const st = moving(w) ? "is-walking" : shown && (shown.who === w || listener === w) ? (shown.who === w ? "is-talking" : "is-listening") : isMe ? `act-${meAct}` : "is-idle";
+        return (
+          <span key={w} className={`pk-actor ${isMe ? "is-me" : ""} ${st}`} style={{ left: `${pos[w]}%` }}>
+            <img key={isMe ? meMood : w} src={art(c.style, src)} alt={isMe ? "あなた" : nameOf(s.job, w)} style={{ ["--sx" as string]: face(w) }} />
+            {isMe && meAct === "down" && <span className="pk-sweat" aria-hidden />}
+          </span>
+        );
+      })}
+      {shown && <Bubble s={s} talk={listener ? { ...shown, to: listener } : shown} sx={cur[shown.who] ?? 84} review={review?.has(shown.text)} k={shown.text} />}
+    </>
+  );
+}
+
 /** 1つの場面を5つの段で見せる舞台 */
 function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: { c: Ctx; s: LifeState; ep: Episode; prev?: Episode; beat: Beat; vibes: Vibe[]; speed: Speed; setSpeed: (v: Speed) => void; onBeat: (b: number) => void }) {
   const reduced = usePrefersReducedMotion();
@@ -616,18 +676,29 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
   const kw = knowOf(s.job).find((x) => x.id === ep.up.know)!;
   const slot = SLOTS[c.fam];
   const others = Array.from(new Set([ep.work.talk.who, ep.learn.who].filter((w) => w !== "me" && whoArt(w, c.look, "普通")))).slice(0, 2) as Who[];
-  const xOf = (w: Who) => (w === "me" ? slot.me : others.includes(w) ? slot.others[others.indexOf(w)] : slot.side);
-  const talk: Talk | null = intro ? null : beat === 0 ? workTalks[Math.min(k, workTalks.length - 1)] : beat === 1 ? { who: "me", text: ep.wall.think } : beat === 2 ? { who: ep.learn.who, to: "me", text: ep.learn.line } : null;
-  const think = !!talk?.text.startsWith("（");
-  const listener: Who | null = talk && !think ? (talk.to ?? (talk.who === "me" ? (others[0] ?? null) : "me")) : null;
-  /* 話す人は相手の方へ、聞く人は話す人の方へ向く */
-  const turn = (w: Who) => {
-    if (!talk || think) return "";
-    const other = w === talk.who ? listener : w === listener ? talk.who : null;
-    if (!other) return "";
-    const d = xOf(other) - xOf(w);
-    return `${w === talk.who ? "is-speak" : "is-listen"} turn-${d >= 0 ? "r" : "l"}`;
+  const base = (w: Who) => (w === "me" ? slot.me : others.includes(w) ? slot.others[others.indexOf(w)] : slot.side);
+  const near = c.fam === "g" ? 17 : 11;
+  /* 段ごとの立ち位置：①話しかける人が近づく ②あなたは1人で真ん中へ、ほかの人は離れる ③教える人がそばに来る ⑤あなたが前に出る */
+  const layout = (b: number): Pos => {
+    const p: Pos = { me: slot.me };
+    others.forEach((w) => (p[w] = base(w)));
+    if (b === 0 && ep.work.talk.who !== "me") p[ep.work.talk.who] = slot.me + near;
+    if (b === 1) {
+      p.me = slot.me + (c.fam === "g" ? 9 : 5);
+      others.forEach((w) => (p[w] = Math.min(93, base(w) + 9)));
+    }
+    if (b === 2 && ep.learn.who !== "me") {
+      others.forEach((w) => (p[w] = w === ep.learn.who ? slot.me + near : Math.min(93, base(w) + 10)));
+    }
+    if (b === 2 && ep.learn.how === "工夫") p.me = slot.me + 6;
+    if (b >= 3) p.me = slot.me + (c.fam === "g" ? 12 : 6);
+    return p;
   };
+  /* 場面の最初は、ほかの人が画面の右から歩いて入ってくる */
+  const enter: Pos = { me: slot.me - 12 };
+  others.forEach((w) => (enter[w] = 108));
+  const prevPos = beat === 0 ? enter : layout(beat - 1);
+  const talk: Talk | null = intro ? null : beat === 0 ? workTalks[Math.min(k, workTalks.length - 1)] : beat === 1 ? { who: "me", text: ep.wall.think } : beat === 2 ? (ep.learn.who === "me" ? { who: "me", text: `（${ep.learn.line}）` } : { who: ep.learn.who, to: "me", text: ep.learn.line }) : null;
   const vibeTalk = new Set(vibes.map((v) => v.talk.text));
   const tints = [...(beat <= 1 ? vibes.map((v) => v.tint) : []), beat === 1 ? ep.wall.tint : beat === 2 ? "warm" : undefined].filter(Boolean);
   const mood: Mood = beat === 1 ? "しんどい" : beat >= 3 ? "元気" : "普通";
@@ -638,14 +709,7 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
       <div className={`pk-stage pk-epstage beat-${beat} ${beat === 1 && !intro ? "is-down" : ""} ${tints.map((t) => `tint-${t}`).join(" ")}`}>
         <img src={art(c.style, PLACE_ART[ep.place])} alt={`${PLACE_LABEL[ep.place]}の場面`} className="pk-bg" />
         <span className="pk-tint" aria-hidden />
-        {others.map((w) => (
-          <img key={w} src={art(c.style, whoArt(w, c.look, "普通")!)} alt={nameOf(s.job, w)} className={`pk-chara is-other ${talk?.who === w ? "is-talking" : ""} ${turn(w)}`} style={{ left: `${xOf(w)}%` }} />
-        ))}
-        <span className={`pk-me act-${act}`} style={{ left: `${slot.me}%` }}>
-          <img key={mood} src={art(c.style, meArt(c.look, mood))} alt="あなた" className={`pk-chara ${turn("me")}`} />
-          {act === "down" && <span className="pk-sweat" aria-hidden />}
-        </span>
-        {talk && <Bubble s={s} talk={talk} sx={xOf(talk.who)} review={vibeTalk.has(talk.text)} k={`${beat}-${k}`} />}
+        {!intro && beat !== 3 && <Actors key={`${beat}`} c={c} s={s} cast={others} prev={prevPos} cur={layout(beat)} talk={talk} meMood={mood} meAct={beat === 4 ? "cheer" : act} review={vibeTalk} reduced={reduced} />}
         {!intro && (
           <span className="pk-beatno" aria-hidden>
             {"①②③④⑤"[beat]} {BEATS[beat]}
@@ -1589,16 +1653,19 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
 
   const slot = SLOTS[c.fam];
   const others = Array.from(new Set(ch.talks.map((t) => t.who).filter((w) => w !== "me" && whoArt(w, c.look, ch.mood)))).slice(0, 2) as Who[];
-  const xOf = (w: Who) => (w === "me" ? slot.me : others.includes(w) ? slot.others[others.indexOf(w)] : slot.side);
-  const talk0 = intro ? undefined : ch.talks[reduced ? ch.talks.length - 1 : Math.min(k, ch.talks.length - 1)];
-  const think = !!talk0?.text.startsWith("（");
-  const talk: Talk | undefined = talk0 && !think ? { ...talk0, to: talk0.to ?? (talk0.who === "me" ? (others[0] ?? undefined) : "me") } : talk0;
-  const turn = (w: Who) => {
-    if (!talk || think || !talk.to) return "";
-    const other = w === talk.who ? talk.to : w === talk.to ? talk.who : null;
-    if (!other) return "";
-    return `${w === talk.who ? "is-speak" : "is-listen"} turn-${xOf(other) - xOf(w) >= 0 ? "r" : "l"}`;
+  const base = (w: Who) => (w === "me" ? slot.me : others.includes(w) ? slot.others[others.indexOf(w)] : slot.side);
+  const ki = reduced ? ch.talks.length - 1 : Math.min(k, ch.talks.length - 1);
+  const talk = intro ? null : (ch.talks[ki] ?? null);
+  /* 話しかける人は、あなたのそばまで歩いてくる */
+  const layoutOf = (i: number): Pos => {
+    const p: Pos = { me: slot.me };
+    others.forEach((w) => (p[w] = base(w)));
+    const t = ch.talks[i];
+    if (t && t.who !== "me" && others.includes(t.who)) p[t.who] = slot.me + (c.fam === "g" ? 17 : 11);
+    return p;
   };
+  const enter: Pos = { me: slot.me - 12 };
+  others.forEach((w) => (enter[w] = 108));
   const tints = (ch.vibes ?? []).map((v) => v.tint).filter(Boolean);
   const moodMe: Mood = ch.down ? "しんどい" : ch.mood;
   const act = ch.down ? "down" : ch.act;
@@ -1612,14 +1679,7 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
       <div className={`pk-stage ${ch.down ? "is-down" : ""} ${tints.map((t) => `tint-${t}`).join(" ")} ${fx.phase === "cut" || fx.phase === "rank" ? "is-fx" : ""}`}>
         <img src={art(c.style, PLACE_ART[ch.place])} alt={`${PLACE_LABEL[ch.place]}の場面`} className="pk-bg" />
         <span className="pk-tint" aria-hidden />
-        {others.map((w) => (
-          <img key={w} src={art(c.style, whoArt(w, c.look, "普通")!)} alt={nameOf(s.job, w)} className={`pk-chara is-other ${talk?.who === w ? "is-talking" : ""} ${turn(w)}`} style={{ left: `${xOf(w)}%` }} />
-        ))}
-        <span className={`pk-me act-${act}`} style={{ left: `${slot.me}%` }}>
-          <img src={art(c.style, meArt(c.look, moodMe))} alt="あなた" className={`pk-chara ${turn("me")}`} />
-          {act === "down" && <span className="pk-sweat" aria-hidden />}
-        </span>
-        {talk && <Bubble s={s} talk={talk} sx={xOf(talk.who)} review={vibeTalk.has(talk.text)} k={String(k)} />}
+        {!intro && <Actors key={ki} partner={ch.talks.find((t) => t.who !== "me")?.who} c={c} s={s} cast={others} prev={ki === 0 ? enter : layoutOf(ki - 1)} cur={layoutOf(ki)} talk={talk} meMood={moodMe} meAct={act} review={vibeTalk} reduced={reduced} />}
         {intro && prev && (
           <button type="button" className="pk-timeskip" onClick={() => setIntro(false)} aria-label="時間が進む演出を飛ばす">
             <span className="pk-ts-label">次の場面へ　{years > 0 ? `${years}年がたちます` : "時間が進みます"}</span>
