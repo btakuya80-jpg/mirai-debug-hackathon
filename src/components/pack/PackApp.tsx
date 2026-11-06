@@ -15,7 +15,7 @@ import { AI_META, AI_NOTE, aiErrorText, jobText, readWithClaude } from "@/lib/ai
 import { BEATS, BRIDGE, LV_NAME, ROLE_AT_FORK, episodeOfVibe, episodesOf, levelsAt, trunkIdxOf, type Beat, type Episode } from "@/lib/episodes";
 import { BRANCH_PAY, PAY_MARK, payOfJob, payTrendOf, roleOfChapter, type PayTrend } from "@/lib/growth";
 import { FIT_MARK, STAGES, gainsAt, knowOf, shinesAt, stageAt, type Know, type Years } from "@/lib/know";
-import { CHECKS } from "@/lib/years";
+import { CHECKS, POINTS } from "@/lib/years";
 import { LFEATURES, LHELP, LNOTE } from "@/lib/life-help";
 import {
   BRANCHES,
@@ -153,8 +153,11 @@ export default function PackApp({ style }: { style: StyleId }) {
             />
           </section>
         )}
+        {s.step === "take" && <Takeaway c={c} s={s} />}
       </main>
-      <p className="pb-6 text-center text-[12px] text-[var(--lf-sub)]">この画面はすべて見本（ダミーデータ）です。登場する会社・人物・口コミはすべて架空です。絵は Higgsfield で生成したオリジナルです。</p>
+      <p className="pb-6 text-center text-[12px] text-[var(--lf-sub)]">
+        {AI_META[s.job.id] ? "会社のまとめ・専門知識・場面の文は、Claude が貼られた求人の本文から書いたシナリオです。" : "この画面は見本の求人（架空）で動いています。"}登場する見本の会社・人物・口コミはすべて架空です。絵は Higgsfield で生成したオリジナルです。
+      </p>
       <InfoWindow
         screen={`${fam === "g" ? "G案（育つ）" : "H案（分かれる）"}／${LSTEP_LABEL[s.step]}`}
         screenNote={LNOTE[s.step]}
@@ -197,20 +200,27 @@ function destArt(job: Job, b: BranchId, age: number): PackKey {
   return PLACE_ART[job.place];
 }
 
+/** 書いている途中の JSON から、最後の日本語の文を取り出す */
+function lastPhrase(t: string): string {
+  const all = [...t.matchAll(/"([^"\\]*[\u3041-\u3093\u30a1-\u30f3\u4e00-\u9fa5][^"\\]*)("|$)/g)];
+  return all.length ? all[all.length - 1][1].slice(-60) : "";
+}
+
 /* ---------- 1. 最初の画面（30秒で何の道具か分かる） ---------- */
 function Entry({ c, s }: { c: Ctx; s: LifeState }) {
   const [url, setUrl] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   /* 求人URLを貼る → Claude で読む。見本のURLは用意した求人本文を、それ以外は貼ってもらった本文を Claude に渡す */
   const [paste, setPaste] = useState<string | null>(null);
-  const [reading, setReading] = useState<{ chars: number } | null>(null);
+  const [reading, setReading] = useState<{ chars: number; tail: string } | null>(null);
   const ctl = useRef<AbortController | null>(null);
   const sample = JOBS[0];
   const run = async (text: string, u: string, fallback?: Job) => {
     setMsg(null);
-    setReading({ chars: 0 });
+    setReading({ chars: 0, tail: "" });
     ctl.current = new AbortController();
-    const r = await readWithClaude(text, u, (n) => setReading({ chars: n }), ctl.current.signal);
+    /* Claude が書いている途中の文を、そのまま画面に出す（本当に Claude が書いていることが見える） */
+    const r = await readWithClaude(text, u, (t) => setReading({ chars: t.length, tail: lastPhrase(t) }), ctl.current.signal);
     setReading(null);
     if ("job" in r) {
       AI_NOTE.text = "";
@@ -290,6 +300,11 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
               <div>
                 <p className="text-[14px] font-bold">Claude が求人を読んでいます…</p>
                 <p className="text-[12.5px] text-[var(--lf-sub)]">会社のまとめ・身につく専門知識・6本の道・場面の文を作っています。{reading.chars > 0 ? `（${reading.chars.toLocaleString()}文字 受け取り）` : "（考え中。30秒〜1分ほどかかります）"}</p>
+                {reading.tail && (
+                  <p className="pk-reading-tail" aria-live="polite">
+                    <small>Claude がいま書いている文</small>「{reading.tail}」
+                  </p>
+                )}
               </div>
               <button type="button" className="pk-futbtn px-3 py-1.5 text-[12.5px]" onClick={() => ctl.current?.abort()}>
                 止める
@@ -1544,7 +1559,237 @@ function StayCompare({ s }: { s: LifeState }) {
         ))}
       </div>
       <p className="mt-3 text-[14px] font-bold">未来を当てるのではなく、次に確かめることを見つける。</p>
+      <button type="button" className="lf-btn mt-3 px-5 py-2.5 text-[14.5px]" onClick={() => s.go("take")}>
+        持ち帰り画面へ（応募するかを決める材料）▶
+      </button>
     </div>
+  );
+}
+
+/* ---------- 持ち帰り画面（システムのゴール）：応募するかを、自分で決められる材料 ---------- */
+const ROAD_WORD = ["細い道", "ふつうの道", "太い道"];
+function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
+  const ai = AI_META[s.job.id];
+  const ks = knowOf(s.job);
+  const lvAt = (k: Know) => stageAt(k, s.forkIdx, s.forkIdx, null) + 1;
+  /* 道の太さ：活きる知識が多いほど太い（数字は出さない） */
+  const weight = (b: BranchId) => ks.reduce((n, k) => n + (k.fits[b].fit === "活きる" ? 2 : k.fits[b].fit === "少し活きる" ? 1 : 0), 0);
+  const ws = BRANCHES.map((b) => weight(b.id));
+  const max = Math.max(1, ...ws);
+  const band = (w: number) => (w >= max * 0.75 ? 2 : w >= max * 0.4 ? 1 : 0);
+  const pts = ai?.points.good.length ? ai.points : POINTS[s.job.id] ?? { good: [], care: [] };
+  const unknown = karteOf(s.job).items.filter((i) => !i.value);
+  const qs = [...(CHECKS[s.job.id] ?? []), ...unknown.slice(0, 2).map((i) => `求人に書いていない「${i.label}」は、どうなっていますか？`)].slice(0, 5);
+  const [saved, setSaved] = useState<string | null>(null);
+  const textOf = () =>
+    [
+      `未来デバッグ　持ち帰りメモ`,
+      `${s.job.company}「${s.job.title}」　${ai ? "（Claude が求人の本文から読み取ったシナリオ）" : "（見本の求人・架空）"}`,
+      `これは試走したシナリオの一つで、未来を約束するものではありません。`,
+      ``,
+      `■ この会社で身につく専門スキル（入社${s.years}年後）`,
+      ...ks.map((k) => `・${k.name}　Lv.${lvAt(k)} ${LV_NAME[lvAt(k)]}${k.assumed ? "（仮定）" : ""}`),
+      ``,
+      `■ そのスキルで開ける道`,
+      ...BRANCHES.map((b, i) => `・${b.label}：${ROAD_WORD[band(ws[i])]}`),
+      ``,
+      `■ 合いそうな所`,
+      ...pts.good.map((x) => `・${x}`),
+      `■ 気をつけたい所`,
+      ...pts.care.map((x) => `・${x}`),
+      ``,
+      `■ 面接で確かめる質問`,
+      ...qs.map((x, i) => `${i + 1}. ${x}`),
+    ].join("\n");
+  const save = async () => {
+    const t = textOf();
+    try {
+      const dl = await (window as unknown as { claude?: { use?: (n: string) => Promise<{ save: (r: { filename: string; data: string }) => Promise<unknown> } | null> } }).claude?.use?.("downloads");
+      if (dl) {
+        await dl.save({ filename: "mirai-debug-memo.txt", data: t });
+        setSaved("保存しました。");
+        return;
+      }
+    } catch (e) {
+      if ((e as { code?: string })?.code === "declined") return setSaved("保存をやめました。");
+    }
+    try {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([t], { type: "text/plain" }));
+      a.download = "mirai-debug-memo.txt";
+      a.click();
+      setSaved("保存しました。");
+    } catch {
+      setSaved("この画面では保存できませんでした。印刷から保存してください。");
+    }
+  };
+  return (
+    <section className="grid gap-5" data-h="take">
+      <PromiseNote />
+      <div className="lf-card pk-take-head p-5 sm:p-6">
+        <p className="pk-eyebrow text-[12px]">STEP 6　持ち帰る</p>
+        <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">応募するかを、自分で決めるための材料</h1>
+        <p className="mt-2 text-[14px] leading-7">
+          {s.job.company}「{s.job.title}」　<span className={`pk-aibadge ${ai ? "is-ai" : ""}`}>{ai ? "Claude が求人の本文から書きました" : "見本の求人（架空）で表示しています"}</span>
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="lf-card p-5" data-h="take-skills">
+          <p className="lf-h text-[17px]">① この会社で身につく専門スキル</p>
+          <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">入社{s.years}年後の筋書き。Lv.1 知った → 2 できる → 3 任される → 4 教えられる</p>
+          <ul className="mt-3 grid gap-2.5">
+            {ks.map((k) => {
+              const n = lvAt(k);
+              return (
+                <li key={k.id} className="pk-take-skill">
+                  <span className="pk-take-lv">
+                    {[1, 2, 3, 4].map((i) => (
+                      <i key={i} className={i <= n ? "is-on" : ""} />
+                    ))}
+                  </span>
+                  <span className="grid gap-0.5">
+                    <b className="text-[14px]">
+                      {k.name}　<small>Lv.{n} {LV_NAME[n]}</small>
+                      {k.id === "ai" && <em className="pk-take-tag">AIスキル</em>}
+                      {k.assumed && <em className="pk-take-tag is-assumed">仮定</em>}
+                    </b>
+                    <span className="text-[12.5px] leading-5 text-[var(--lf-sub)]">{k.src?.quote ? `求人の本文：「${k.src.quote}」` : k.what || k.where}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className="lf-card p-5" data-h="take-roads">
+          <p className="lf-h text-[17px]">② そのスキルで開ける道</p>
+          <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">活きるスキルが多い道ほど太く描いています（点数ではありません）</p>
+          <ul className="mt-3 grid gap-2">
+            {BRANCHES.map((b, i) => {
+              const k = band(ws[i]);
+              const good = ks.filter((x) => x.fits[b.id].fit === "活きる").map((x) => x.name);
+              return (
+                <li key={b.id} className={`pk-take-road rw-${k}`}>
+                  <span className="pk-take-roadline" aria-hidden />
+                  <span className="grid">
+                    <b className="text-[14px]">
+                      {b.label}　<small>{ROAD_WORD[k]}</small>
+                    </b>
+                    <span className="text-[12px] text-[var(--lf-sub)]">{good.length ? `活きる：${good.join("・")}` : "活きるスキルはまだ少ない"}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className="lf-card p-5" data-h="take-points">
+          <p className="lf-h text-[17px]">③ 自分に合いそうな所・気をつけたい所</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="pk-take-pt is-good">
+              <p className="font-bold">合いそうな所</p>
+              <ul>
+                {pts.good.map((x) => (
+                  <li key={x}>・{x}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="pk-take-pt is-care">
+              <p className="font-bold">気をつけたい所</p>
+              <ul>
+                {pts.care.map((x) => (
+                  <li key={x}>・{x}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          {s.profile.prefs.length > 0 && (
+            <div className="mt-3 text-[13px] leading-6">
+              <p className="font-bold">あなたが入れた条件と比べると</p>
+              <ul>
+                {s.profile.prefs.map((p) => {
+                  const hit = [...s.job.tags, ...s.job.body, ai?.text ?? ""].some((t) => t.includes(p.replace(/あり$|の支援$/, "")));
+                  return (
+                    <li key={p}>
+                      {hit ? "○" : "？"} {p}：{hit ? "求人の本文に書いてある" : "求人の本文からは分からない（面接で確かめる）"}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="lf-card p-5" data-h="take-questions">
+          <p className="lf-h text-[17px]">④ 面接で確かめるといい質問</p>
+          <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">筋書きで気になった所と、求人に書いていない（不明の）所を、質問の形にしました</p>
+          <ol className="pk-take-qs mt-3 grid gap-2">
+            {qs.map((x, i) => (
+              <li key={x}>
+                <b>Q{i + 1}</b>
+                {x}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <div className="lf-card pk-take-next p-5" data-h="take-next">
+        <p className="lf-h text-[17px]">⑤ 次の一歩</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="pk-take-step">
+            <b>応募する</b>
+            <span>質問を持って、応募や職場見学に進む。</span>
+            {jobByUrl(s.job.url) ? (
+              <span className="text-[12px] text-[var(--lf-sub)]">見本の求人なので、応募ページはありません。</span>
+            ) : (
+              <a className="lf-btn px-4 py-2 text-[13.5px]" href={s.job.url} target="_blank" rel="noreferrer">
+                求人ページを開く ↗
+              </a>
+            )}
+          </div>
+          <div className="pk-take-step">
+            <b>他の求人と比べる</b>
+            <span>別の求人でも試走して、育つスキルと道の太さを比べる。</span>
+            <button type="button" className="pk-futbtn px-4 py-2 text-[13.5px]" onClick={() => s.go("jobs")}>
+              別の求人を読む ▶
+            </button>
+          </div>
+          <div className="pk-take-step">
+            <b>1年・5年でも見てみる</b>
+            <span>分かれ道の時点を変えると、開ける道が変わる。</span>
+            <span className="flex flex-wrap gap-2">
+              {([1, 3, 5] as Years[])
+                .filter((y) => y !== s.years)
+                .map((y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    className="pk-futbtn px-4 py-2 text-[13.5px]"
+                    onClick={() => {
+                      s.setYears(y);
+                      s.go("life");
+                    }}
+                  >
+                    {y}年で見る ▶
+                  </button>
+                ))}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[color-mix(in_srgb,var(--lf-ink)_12%,transparent)] pt-4">
+          <button type="button" className="lf-btn px-5 py-2.5 text-[14px]" onClick={save}>
+            このメモを保存する（テキスト）
+          </button>
+          <button type="button" className="pk-futbtn px-4 py-2.5 text-[13.5px]" onClick={() => window.print()}>
+            印刷する
+          </button>
+          {saved && <span className="text-[13px] font-bold">{saved}</span>}
+        </div>
+      </div>
+      <p className="text-[13px] leading-6 text-[var(--lf-sub)]">未来を当てるのではなく、次に確かめることを見つける。決めるのは、あなたです。</p>
+    </section>
   );
 }
 
@@ -1667,8 +1912,13 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
                 </button>
               )}
               {s.atEnd && (
-                <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go("saves")}>
-                  {COPY[c.fam].saves} ▶
+                <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go("take")}>
+                  持ち帰る（応募するかを決める材料）▶
+                </button>
+              )}
+              {s.branch && !s.atEnd && (
+                <button type="button" className="pk-futbtn px-4 py-2.5 text-[13.5px]" onClick={() => s.go("take")}>
+                  ここで持ち帰る ▶
                 </button>
               )}
               {s.branch && (
@@ -1689,8 +1939,8 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
                       {h.label}見る ▶
                     </button>
                   ))}
-                  <button type="button" className="pk-futbtn px-4 py-2.5 text-[13.5px]" onClick={() => s.go("saves")}>
-                    ここで{COPY[c.fam].saves}
+                  <button type="button" className="pk-futbtn px-4 py-2.5 text-[13.5px]" onClick={() => s.go("take")}>
+                    ここで持ち帰る ▶
                   </button>
                 </div>
               </div>

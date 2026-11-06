@@ -55,6 +55,7 @@ export type AiRead = {
   fork: { y1: string; y3: string; y5: string; line: string };
   roads: Record<BranchId, string>;
   checks: string[];
+  points?: { good?: string[]; care?: string[] };
 };
 
 export type AiMeta = {
@@ -63,6 +64,8 @@ export type AiMeta = {
   karte: AiRead["karte"];
   roads: Record<BranchId, string>;
   checks: string[];
+  /** 合いそうな所・気をつけたい所（Claude が求人から書く） */
+  points: { good: string[]; care: string[] };
   /** 貼られた求人の本文（出典の表示に使う） */
   text: string;
 };
@@ -108,7 +111,8 @@ export function buildPrompt(text: string, url: string): string {
      "after": {"when": "その後の時点（例：3年後）", "text": "このスキルがあとでどう役に立ったか"}} ],
   "fork": {"y1": "1年後の分かれ道の時点の様子（1文）", "y3": "3年後の様子（1文）", "y5": "5年後の様子（1文）", "line": "3年後に上司があなたにかける一言"},
   "roads": {"stay": "この会社に残る道での場面（2文。身についた知識がどう活きるか）", "same": "同じ業界で移る道", "other": "違う業界へ移る道", "indep": "独立する道", "relearn": "学び直す道", "abroad": "海外へ行く道"},
-  "checks": ["面接や職場見学で確かめるとよいこと", "…", "…"]
+  "checks": ["面接で聞ける質問の形（「〜ですか？」）。求人に書いていない所や「不明」の所を確かめる質問", "…", "…"],
+  "points": { "good": ["この仕事が合いそうな人（求人の中身から。2〜3個）"], "care": ["応募の前に気をつけたい所（求人の中身から。2〜3個。悪口にしない）"] }
 }
 
 # 求人の本文（URL：${url || "なし"}）
@@ -226,6 +230,10 @@ export function registerAiRead(raw: unknown, url: string, text: string): Job {
     karte: (Array.isArray(r.karte) ? r.karte : []).slice(0, 12).map((k) => ({ label: str(k?.label, "項目"), value: strOrNull(k?.value), where: strOrNull(k?.where) })),
     roads: Object.fromEntries(B_IDS.map((b) => [b, str(roads[b], "")])) as Record<BranchId, string>,
     checks: (Array.isArray(r.checks) ? r.checks : []).map((x) => str(x)).filter(Boolean).slice(0, 4),
+    points: {
+      good: (Array.isArray(r.points?.good) ? r.points.good : []).map((x) => str(x)).filter(Boolean).slice(0, 3),
+      care: (Array.isArray(r.points?.care) ? r.points.care : []).map((x) => str(x)).filter(Boolean).slice(0, 3),
+    },
     text,
   };
   CHECKS[id] = AI_META[id].checks;
@@ -233,16 +241,21 @@ export function registerAiRead(raw: unknown, url: string, text: string): Job {
 }
 
 /** 求人の本文を Claude に1回渡し、登録した job を返す。使えない・失敗した時は理由を返す */
-export async function readWithClaude(text: string, url: string, onText?: (n: number) => void, signal?: AbortSignal): Promise<{ job: Job } | { error: string }> {
+export async function readWithClaude(text: string, url: string, onText?: (t: string) => void, signal?: AbortSignal): Promise<{ job: Job } | { error: string }> {
   const sample = await getSample();
   if (!sample) return { error: "unavailable" };
-  try {
-    const raw = await sample.json<AiRead>(buildPrompt(text, url), { modelTier: "default", signal, onText: onText ? ({ text: t }: { text: string }) => onText(t.length) : undefined });
-    return { job: registerAiRead(raw, url, text) };
-  } catch (e) {
-    const code = (e as { code?: string })?.code ?? "upstream_error";
-    return { error: code };
+  /* 形が崩れた答え（invalid_json）だけ、もう1回だけ頼み直す */
+  for (let tryNo = 0; tryNo < 2; tryNo++) {
+    try {
+      const raw = await sample.json<AiRead>(buildPrompt(text, url), { modelTier: "default", signal, onText: onText ? ({ text: t }: { text: string }) => onText(t) : undefined });
+      return { job: registerAiRead(raw, url, text) };
+    } catch (e) {
+      const code = (e as { code?: string })?.code ?? "upstream_error";
+      if (code === "invalid_json" && tryNo === 0) continue;
+      return { error: code };
+    }
   }
+  return { error: "invalid_json" };
 }
 
 /** エラーの言い方（画面用） */

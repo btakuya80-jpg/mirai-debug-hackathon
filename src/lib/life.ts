@@ -600,9 +600,9 @@ function showScene() {
 /* ---------- 画面の流れ ---------- */
 export const LSTEPS = ["jobs", "make", "life", "saves"] as const;
 /** G・H案（Higgsfield版）は、求人のあとに「会社のまとめ」をはさむ */
-export const PSTEPS = ["jobs", "karte", "make", "life", "saves"] as const;
+export const PSTEPS = ["jobs", "karte", "make", "life", "saves", "take"] as const;
 export type LStep = (typeof PSTEPS)[number];
-export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", karte: "会社のまとめ", make: "自分を設定", life: "生涯を進める", saves: "人生を並べる" };
+export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", karte: "会社のまとめ", make: "自分を設定", life: "生涯を進める", saves: "人生を並べる", take: "持ち帰る" };
 
 export type Save = { branch: BranchId; reached: number };
 
