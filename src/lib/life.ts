@@ -6,6 +6,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isDemoMode } from "./mirai";
 import { companyByUrl, readVibes, type Vibe } from "./reviews";
+import { setKnowYears, type Years } from "./know";
+import { FORK_Y1, FORK_Y5 } from "./years";
 
 export const ABILITIES = ["段取り", "対人", "専門スキル", "AI活用", "企画", "指導", "体力・継続", "自分で決める力"] as const;
 export const GRADES = ["G", "F", "E", "D", "C", "B", "A", "S"] as const;
@@ -665,9 +667,23 @@ export function useLife() {
       }),
     [job, vibes],
   );
-  const forkIdx = trunk.length - 1;
-  const detail = branch ? job.detailed?.[branch] : undefined;
-  const chapters: Chapter[] = detail ? [...trunk, ...detail.chapters] : trunk;
+  /* 分かれ道の時点（1年／3年／5年）。3年が初期。作り込んだ道（detailed）は3年の時だけ使う */
+  const [years, setYearsRaw] = useState<Years>(3);
+  setKnowYears(years);
+  const yTrunk = useMemo<Chapter[]>(() => {
+    if (years === 3) return trunk;
+    if (years === 1) {
+      const y1 = FORK_Y1[job.id];
+      const last = trunk[2];
+      return [...trunk.slice(0, 2), { ...last, fork: true, events: y1 ? [y1.event, ...last.events.slice(1)] : last.events, talks: y1 ? [y1.talk, ...last.talks] : last.talks }];
+    }
+    const y5 = FORK_Y5[job.id];
+    const f = trunk[3];
+    return [...trunk.slice(0, 3), { ...f, fork: false }, { ...f, at: 5, label: "5年後", fork: true, vibes: undefined, cutin: undefined, down: false, mood: "元気", events: [y5?.event ?? "5年が過ぎ、身についた知識を人に教える立場になる"], talks: y5 ? [y5.talk] : f.talks }];
+  }, [years, trunk, job.id]);
+  const forkIdx = yTrunk.length - 1;
+  const detail = branch && years === 3 ? job.detailed?.[branch] : undefined;
+  const chapters: Chapter[] = detail ? [...yTrunk, ...detail.chapters] : yTrunk;
   const chapter = chapters[Math.min(idx, chapters.length - 1)];
   const prev = idx > 0 ? chapters[idx - 1] : undefined;
   const atFork = idx === forkIdx && !branch;
@@ -697,7 +713,7 @@ export function useLife() {
   const choose = (b: BranchId) => {
     setBranch(b);
     setSaves((s) => (s.includes(b) ? s : [...s, b]));
-    setIdx(forkIdx + (job.detailed?.[b] ? 1 : 0));
+    setIdx(forkIdx + (years === 3 && job.detailed?.[b] ? 1 : 0));
     showScene();
   };
   /** 分かれ道まで戻る（デバッグ） */
@@ -719,8 +735,15 @@ export function useLife() {
     setBranch(null);
     setIdx(0);
   };
+  /** 分かれ道の時点を切り替える。選んだ道はいったん外し、新しい分かれ道に立つ */
+  const setYears = (y: Years) => {
+    setKnowYears(y);
+    setYearsRaw(y);
+    setBranch(null);
+    setIdx(y === 1 ? 2 : y === 3 ? 3 : 4);
+  };
 
-  return { step, go, job, jobId, pickJob, companyUrl, setCompanyUrl, companyInfo, reviewText, setReviewText, vibes, profile, setProfile, toggle, branch, choose, rewind, jump, next, restart, idx, chapters, chapter, prev, forkIdx, atFork, atEnd, detail, saves };
+  return { step, go, job, jobId, pickJob, companyUrl, setCompanyUrl, companyInfo, reviewText, setReviewText, vibes, profile, setProfile, toggle, branch, choose, rewind, jump, next, restart, idx, chapters, chapter, prev, forkIdx, atFork, atEnd, detail, saves, years, setYears };
 }
 export type LifeState = ReturnType<typeof useLife>;
 

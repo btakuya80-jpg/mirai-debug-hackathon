@@ -4,6 +4,7 @@
 
 import type { Job } from "./life";
 import type { CompanyInfo } from "./reviews";
+import { AI_META } from "./ai";
 
 export type KarteSrc = { kind: "求人原稿" | "会社の公式ページ"; url: string; where: string };
 export type KarteItem = { label: string; value: string | null; src: KarteSrc | null; why?: string };
@@ -12,6 +13,12 @@ const host = (u: string) => u.replace("https://", "");
 
 export function karteOf(job: Job, ci?: CompanyInfo): { items: KarteItem[]; known: number; unknown: number } {
   const J = (where: string): KarteSrc => ({ kind: "求人原稿", url: host(job.url), where });
+  /* Claude が求人の本文から読んだ時は、その結果をそのまま使う（読めない所は「不明」） */
+  const ai = AI_META[job.id];
+  if (ai) {
+    const items: KarteItem[] = ai.karte.map((k) => ({ label: k.label, value: k.value, src: k.value ? J(k.where ?? "本文") : null, why: k.value ? undefined : "求人の本文に書いていません" }));
+    return { items, known: items.filter((i) => i.value).length, unknown: items.filter((i) => !i.value).length };
+  }
   const C = (where: string): KarteSrc | null => (ci ? { kind: "会社の公式ページ", url: host(ci.url), where } : null);
   const fromPoints = (re: RegExp) => ci?.points.find((p) => re.test(p)) ?? null;
   const items: KarteItem[] = [

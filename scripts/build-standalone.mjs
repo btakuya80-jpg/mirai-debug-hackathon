@@ -14,8 +14,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const ONE = process.argv.includes("--one");
-const out = resolve(root, ONE ? "dist-one" : "dist-standalone");
+// --g：G案だけの1ページ（dist-g/index.html）。11/6 から作り込みはこのページだけで進める
+const GONLY = process.argv.includes("--g");
+const ONE = process.argv.includes("--one") || GONLY;
+const out = resolve(root, GONLY ? "dist-g" : ONE ? "dist-one" : "dist-standalone");
 mkdirSync(out, { recursive: true });
 
 const REACT = "18.3.1";
@@ -62,10 +64,11 @@ const links = ONE
   : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/g2": "g2.html", "/h": "h.html", "/h2": "h2.html", "/i": "i.html", "/j": "j.html" };
 
 // G・H案の絵（public/packs）を書き出し先にも置く。Artifact では files で一緒に公開する
-cpSync(resolve(root, "public/packs"), resolve(out, "packs"), { recursive: true });
+cpSync(resolve(root, GONLY ? "public/packs/g1" : "public/packs"), resolve(out, GONLY ? "packs/g1" : "packs"), { recursive: true });
 
-const ONLY_IDS = process.env.ONLY ? process.env.ONLY.split(",") : null;
-for (const p of PAGES.filter((x) => !ONLY_IDS || ONLY_IDS.includes(x.id))) {
+const ONLY_IDS = GONLY ? ["g"] : process.env.ONLY ? process.env.ONLY.split(",") : null;
+for (const p0 of PAGES.filter((x) => !ONLY_IDS || ONLY_IDS.includes(x.id))) {
+  const p = GONLY ? { ...p0, title: "未来デバッグ" } : p0;
   const js = await build({
     entryPoints: [resolve(root, `standalone/${p.id}.tsx`)],
     bundle: true,
@@ -91,11 +94,12 @@ for (const p of PAGES.filter((x) => !ONLY_IDS || ONLY_IDS.includes(x.id))) {
     cwd: root,
     stdio: "ignore",
   });
-  const css = readFileSync(cssOut, "utf8");
+  // CSS の日本語（content:"出典" など）は \XXXX に直す。文字コードの宣言が無い開き方でも化けないように
+  const css = readFileSync(cssOut, "utf8").replace(/[^\x00-\x7f]/gu, (ch) => "\\" + ch.codePointAt(0).toString(16) + " ");
 
   // Artifact は入口のページにだけ <!doctype>/<html>/<head>/<body> を付ける。
   // まとめて公開する時の3案（a.html など）は、自分で完全な HTML にする。
-  const full = ONE && p.id !== "home";
+  const full = ONE && p.id !== "home" && !GONLY;
   const body = `<title>${p.title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -108,7 +112,7 @@ ${css}
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/${REACT}/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/${REACT}/umd/react-dom.production.min.js"></script>
-<script>window.__MIRAI_LINKS=${JSON.stringify(links)};window.__MIRAI_PACK_BASE="./packs";</script>
+<script>window.__MIRAI_LINKS=${JSON.stringify(links)};window.__MIRAI_PACK_BASE="./packs";${GONLY ? "window.__MIRAI_SINGLE=true;" : ""}</script>
 <script>${code}</script>
 `;
   const cut = body.indexOf('<div id="root">');
@@ -125,7 +129,7 @@ ${body.slice(cut)}</body>
 </html>
 `
     : body;
-  const name = ONE && p.id === "home" ? "index" : p.id;
+  const name = GONLY || (ONE && p.id === "home") ? "index" : p.id;
   writeFileSync(resolve(out, `${name}.html`), html);
   console.log(`${name}.html  ${(html.length / 1024).toFixed(0)}KB`);
 }

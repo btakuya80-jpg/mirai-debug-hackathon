@@ -26,6 +26,10 @@ export type Know = {
   /** 作り込んだ道で、この知識が活きた場面（その道の何番目の場面か） */
   shine?: Partial<Record<BranchId, number>>;
   fits: Record<BranchId, { fit: Fit; why: string }>;
+  /** 求人に書いていない、シナリオ上の仮定（AIスキルなど）。画面に「仮定」と出す */
+  assumed?: boolean;
+  /** 5年目の育ち具合。会社・職務ごとに決める（年数だけで機械的に上げない） */
+  y5?: number;
 };
 
 const F = (fit: Fit, why: string) => ({ fit, why });
@@ -122,8 +126,8 @@ export const KNOW: Record<string, Know[]> = {
     },
     {
       id: "ai",
-      name: "AIの道具の使い方",
-      what: "下書きは道具に任せ、考える時間を増やす",
+      name: "AIの答えを確かめて使う",
+      what: "AIの下書きを、数字と事実で確かめてから企画に組み込む",
       where: "1年後、資料の下書きを半分の時間にした場面",
       src: { para: 3, quote: "AIの道具を、毎月みんなで試しています。" },
       grow: [-1, -1, 0, 2],
@@ -305,13 +309,79 @@ export const KNOW: Record<string, Know[]> = {
   ],
 };
 
-export const knowOf = (job: Job) => KNOW[job.id] ?? [];
+/* ---------- AIスキル（11/6 決定：専門知識の1つとして入れる） ----------
+   「AIを使える」ではなく「AIの答えを確かめて、仕事に組み込める」と描く。
+   求人に書いていない会社では「仮定」と表示する。 */
+const AI_SKILL = (where: string, grow: Know["grow"], y5: number): Know => ({
+  id: "ai",
+  name: "AIの答えを確かめて使う",
+  what: "AIが出した答えを、現場の記録や決まりで確かめてから仕事に組み込む",
+  where,
+  src: null,
+  assumed: true,
+  grow,
+  y5,
+  fits: {
+    stay: F("活きる", "社内で、確かめ方を教える役になる"),
+    same: F("活きる", "どの会社でも、確かめてから使える人は少ない"),
+    other: F("活きる", "業界が変わっても、確かめ方は同じ"),
+    indep: F("活きる", "1人でも、書類や見積もりを速く正しく作れる"),
+    relearn: F("活きる", "学び直しの道具として使える"),
+    abroad: F("少し活きる", "言葉の壁を越える道具になる。確かめ方は現地の決まりに合わせる"),
+  },
+});
+for (const [id, where, grow, y5] of [
+  ["tsumugi", "3年後、点検の記録をAIにまとめさせ、自分で確かめて使う（求人に書いていない仮定）", [-1, -1, -1, 0], 1],
+  ["tamayura", "3年後、工程表の下書きをAIに作らせ、現場で確かめて使う（求人に書いていない仮定）", [-1, -1, -1, 0], 2],
+  ["shiosai", "3年後、出荷の予定をAIに出させ、棚の数と照らして使う（求人に書いていない仮定）", [-1, -1, -1, 0], 1],
+  ["komugi", "3年後、仕込みの量の見通しをAIに出させ、伝票で確かめて使う（求人に書いていない仮定）", [-1, -1, -1, 0], 1],
+] as const) {
+  if (!KNOW[id].some((k) => k.id === "ai")) KNOW[id].push(AI_SKILL(where, [...grow] as Know["grow"], y5));
+}
+
+/* 5年目の育ち具合（会社・職務で差を出す）。書いていない知識は3年目のまま */
+const Y5: Record<string, Record<string, number>> = {
+  tsumugi: { safety: 3, qc: 3, maint: 1, teach: 2 },
+  soyokaze: { sheet: 3, ai: 3, plan: 2 },
+  tamayura: { draw: 3, plan: 3, license: 2 },
+  shiosai: { stock: 3, fork: 3, shift: 2 },
+  komugi: { prep: 3, cost: 2, run: 1 },
+};
+
+/* ---------- 分かれ道の時点（1年／3年／5年）。初期は3年 ---------- */
+export type Years = 1 | 3 | 5;
+let YEARS: Years = 3;
+/** useLife が毎回の描画で呼ぶ。knowOf はこの時点に合わせて知識を返す */
+export const setKnowYears = (y: Years) => {
+  YEARS = y;
+};
+export const getKnowYears = () => YEARS;
+
+const DOWN: Record<Fit, Fit> = { 活きる: "少し活きる", 少し活きる: "活きない", 活きない: "活きない" };
+const UP: Record<Fit, Fit> = { 活きる: "活きる", 少し活きる: "活きる", 活きない: "少し活きる" };
+
+function atYears(job: Job, k: Know, y: Years): Know {
+  if (y === 3) return k;
+  if (y === 1) {
+    /* 1年＝「知った・できる」まで。移る道は淡く狭い（独立・海外・違う業界は1段下げる） */
+    const fits = { ...k.fits };
+    for (const b of ["other", "indep", "abroad", "relearn"] as BranchId[]) fits[b] = { fit: DOWN[k.fits[b].fit], why: `1年目ではまだ浅い。${k.fits[b].why}` };
+    return { ...k, grow: [k.grow[0], k.grow[1], k.grow[2], k.grow[2]], fits };
+  }
+  /* 5年＝「教えられる」まで育つ知識がある。会社・職務ごとの Y5 表で決める */
+  const s5 = Math.max(k.grow[3], k.y5 ?? Y5[job.id]?.[k.id] ?? k.grow[3]);
+  const fits = { ...k.fits };
+  if (s5 >= 3) for (const b of ["indep", "abroad", "same"] as BranchId[]) fits[b] = { fit: UP[k.fits[b].fit], why: `教えられるまで育つと、${k.fits[b].why}` };
+  return { ...k, grow: [...k.grow, s5] as unknown as Know["grow"], fits };
+}
+
+export const knowOf = (job: Job) => (KNOW[job.id] ?? []).map((k) => atYears(job, k, YEARS));
 
 /** いまの場面での育ち具合（STAGES の番号。-1＝まだ） */
 export function stageAt(k: Know, idx: number, forkIdx: number, branch: BranchId | null): number {
-  if (idx <= forkIdx || !branch) return k.grow[Math.min(idx, forkIdx)];
+  if (idx <= forkIdx || !branch) return k.grow[Math.min(idx, forkIdx, k.grow.length - 1)];
   const j = idx - forkIdx - 1;
-  return k.detail?.[branch]?.[j] ?? k.grow[forkIdx];
+  return k.detail?.[branch]?.[j] ?? k.grow[Math.min(forkIdx, k.grow.length - 1)];
 }
 
 /** この場面で新しく身についた・育った知識 */

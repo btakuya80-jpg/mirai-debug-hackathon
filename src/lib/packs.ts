@@ -12,7 +12,7 @@ export type StyleId = "g1" | "g2" | "h1" | "h2";
 export const PACK_KEYS = [
   "me-m-genki", "me-m-futsu", "me-m-shindoi",
   "me-f-genki", "me-f-futsu", "me-f-shindoi",
-  "boss", "senpai", "peer",
+  "boss", "senpai", "peer", "partner-m", "partner-f",
   "bg-office", "bg-factory", "bg-construction", "bg-logistics", "bg-food",
   "cut-rankup", "cut-rise", "cut-fork",
   "ev-family", "ev-home", "ev-overseas", "ev-independent", "ev-relearn",

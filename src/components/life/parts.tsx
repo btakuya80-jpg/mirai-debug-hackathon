@@ -137,12 +137,14 @@ export function CompanyExtras({ s, stack }: { s: LifeState; stack?: boolean }) {
           会社情報のURL <span className="text-[12px] font-normal text-[var(--lf-sub)]">（任意）</span>
         </p>
         <input value={s.companyUrl} onChange={(e) => s.setCompanyUrl(e.target.value)} placeholder="https://kaisha.example/…" className="lf-input px-3 py-2.5 text-[14px]" inputMode="url" aria-label="会社情報のURL" />
-        <p className="text-[12.5px] text-[var(--lf-sub)]">
-          見本：
-          <button type="button" className="underline underline-offset-2" onClick={() => s.setCompanyUrl(sample.url)}>
-            {sample.url.replace("https://", "")}
-          </button>
-        </p>
+        {sample && (
+          <p className="text-[12.5px] text-[var(--lf-sub)]">
+            見本：
+            <button type="button" className="underline underline-offset-2" onClick={() => s.setCompanyUrl(sample.url)}>
+              {sample.url.replace("https://", "")}
+            </button>
+          </p>
+        )}
         {ci ? (
           <div className="lf-note grid gap-1 p-3 text-[13px] leading-6">
             <p className="font-bold">
@@ -169,9 +171,11 @@ export function CompanyExtras({ s, stack }: { s: LifeState; stack?: boolean }) {
           aria-label="口コミの文章"
         />
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-[var(--lf-sub)]">
-          <button type="button" className="underline underline-offset-2" onClick={() => s.setReviewText(SAMPLE_REVIEWS[s.job.id])}>
-            見本の口コミ（架空）を入れる
-          </button>
+          {SAMPLE_REVIEWS[s.job.id] && (
+            <button type="button" className="underline underline-offset-2" onClick={() => s.setReviewText(SAMPLE_REVIEWS[s.job.id])}>
+              見本の口コミ（架空）を入れる
+            </button>
+          )}
           <span>口コミサイトを自動で読むことはしません。</span>
         </p>
         <div className="flex flex-wrap items-center gap-1.5" aria-live="polite">
