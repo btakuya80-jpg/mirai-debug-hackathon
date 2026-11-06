@@ -1,32 +1,39 @@
 "use client";
 
-/* G案・H案（Higgsfield の絵で作り直した4ページ）の本体。
-   流れ・データは H・I・J 案と共通（src/lib/life.ts）。絵は src/lib/packs.ts の案ごとのセットから出す。
-   g1・g2 は「育成シミュレーション」（職場の絵を画面いっぱいに、キャラが立って働く）、
-   h1・h2 は「ジオラマ」（模型の部屋を机の上に置き、人形が動く）。 */
+/* G案・H案（Higgsfield の絵）。この作品の核＝「その会社で、どんな専門知識が身につき、その後の人生でどう活きるか」。
+   G（/g・/g2）＝「育つ」が主役：場面ごとに専門知識が 知った→できる→任される→教えられる と育つ。手帳とカットインで刻む。
+   H（/h・/h2）＝「分かれる」が主役：町の模型の上の「道の地図」が年表。持っていく知識が、どの道で活きる／活きないかを地図で見せる。
+   共通：最初の画面（30秒で何の道具か）→ 会社のまとめ（出典・不明）→ 分身 → 生涯 → 人生を並べる。
+   見せ場は「分かれ道で、身につけた知識が6本の道に配られる瞬間」。 */
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import InfoWindow, { type HelpItem } from "@/components/InfoWindow";
-import { BranchPick, JobBoard, MakeForm, SaveCompare, SimpleBranchView, StatsPanel } from "@/components/life/parts";
+import { CompanyExtras, JobBoard, MakeForm, SaveCompare, SimpleBranchView, StatsPanel } from "@/components/life/parts";
+import { karteOf } from "@/lib/karte";
+import { FIT_MARK, STAGES, gainsAt, knowOf, shinesAt, stageAt, type Know } from "@/lib/know";
 import { LFEATURES, LHELP, LNOTE } from "@/lib/life-help";
 import {
   BRANCHES,
   END_AGE,
-  LSTEPS,
-  LSTEP_LABEL,
+  JOBS,
   PLACE_LABEL,
+  PSTEPS,
+  LSTEP_LABEL,
   ageAt,
   chapterLabel,
   changesOf,
+  jobByUrl,
   nameOf,
   simpleBranch,
   useFx,
   useLife,
+  type BranchId,
   type Chapter,
   type CutKind,
   type Job,
   type LifeState,
+  type LStep,
   type Mood,
   type Who,
 } from "@/lib/life";
@@ -36,23 +43,27 @@ import { PACKS, PLACE_ART, art, eventArt, meArt, whoArt, type Look, type PackKey
 type Fam = "g" | "h";
 type Ctx = { style: StyleId; fam: Fam; look: Look };
 
-const EYEBROW: Record<Fam, string[]> = {
-  g: ["STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4"],
-  h: ["① 町", "② 人形", "③ 生涯", "④ 棚"],
-};
-const TITLES: Record<Fam, { t: string; sub: string }[]> = {
-  g: [
-    { t: "どの職場で、分身を育てる？", sub: "架空の求人5件から選ぶか、見本の求人URLを貼ってください。会社情報や、自分で読んだ口コミも足せます。" },
-    { t: "分身をつくる", sub: "年齢と4つの条件を選ぶだけ。見た目は2種類から選べます。" },
-    { t: "", sub: "" },
-    { t: "セーブデータを並べる", sub: "選んだ人生はセーブデータとして残ります。まだ見ていない道は簡易表示です。" },
-  ],
-  h: [
-    { t: "この町の、どの職場の模型をのぞく？", sub: "架空の求人5件から選ぶか、見本の求人URLを貼ってください。会社情報や、自分で読んだ口コミも足せます。" },
-    { t: "あなたの人形をつくる", sub: "年齢と4つの条件を選ぶだけ。人形は2種類から選べます。" },
-    { t: "", sub: "" },
-    { t: "できあがった模型を、棚に並べる", sub: "選んだ人生は模型として棚に残ります。まだ見ていない道は簡易表示です。" },
-  ],
+const COPY: Record<Fam, { tag: string; make: string; start: string; life: string; saves: string; savesSub: string; book: string; gain: string }> = {
+  g: {
+    tag: "専門知識が、育っていく",
+    make: "分身をつくる",
+    start: "働きはじめる",
+    life: "専門知識の育ち方を見る",
+    saves: "セーブデータを並べる",
+    savesSub: "道ごとに、持っていった専門知識がどう使われたかを並べます。",
+    book: "専門知識の手帳",
+    gain: "専門知識 GET!",
+  },
+  h: {
+    tag: "専門知識で、道が分かれる",
+    make: "人形をつくる",
+    start: "地図の上を歩きはじめる",
+    life: "道の地図を進む",
+    saves: "地図の上に、人生を並べる",
+    savesSub: "選んだ道を地図に重ね、持っていった知識が活きた道・活きなかった道を見比べます。",
+    book: "持っていく知識（荷物）",
+    gain: "知識を荷物に入れた",
+  },
 };
 
 export default function PackApp({ style }: { style: StyleId }) {
@@ -60,12 +71,20 @@ export default function PackApp({ style }: { style: StyleId }) {
   const [look, setLook] = useState<Look>("m");
   const fam: Fam = style.startsWith("g") ? "g" : "h";
   const c: Ctx = { style, fam, look };
-  const stepNo = LSTEPS.indexOf(s.step);
-  const head = TITLES[fam][stepNo];
-  const help: (HelpItem & { step: (typeof LSTEPS)[number] })[] = [
-    ...LHELP,
-    { id: "look", step: "make", sel: '[data-h="look"]', name: "見た目と表情", what: "分身は2種類から選べる。場面のきもちに合わせて、元気・普通・しんどいの3つの表情に変わる。", why: "同じ人物がどの場面でも同じ見た目で出ることで、自分の分身として追いかけやすくする。", src: "依頼（2026-11-06・Higgsfieldで洗練）" },
-    { id: "lifeline", step: "life", sel: '[data-h="lifeline"]', name: "上の年表（今の年齢から75歳まで）", what: "いまの年齢の位置と、場面・人生のできごと・分かれ道を1本の線で見せる。過去の場面は押すと戻れる。", why: "いま生涯のどのあたりにいるかを、いつでも分かるようにするため。", src: "依頼（2026-11-06・Higgsfieldで洗練）" },
+  const T = COPY[fam];
+  const SRC = "依頼（2026-11-06・見せ方の作り直し）";
+  const help: (HelpItem & { step: LStep })[] = [
+    { id: "hero", step: "jobs", sel: '[data-h="hero"]', name: "最初の画面（30秒で何の道具か）", what: "一文・3つの段（求人URL→専門知識→75歳までの道）・見本の求人ボタンだけを最初に出す。", why: "初めて見た人が説明なしで、求人1件から人生を試す道具だと分かるようにするため。", src: SRC },
+    ...LHELP.filter((x) => x.id !== "company" && x.id !== "reviews"),
+    { id: "karte", step: "karte", sel: '[data-h="karte"]', name: "会社のまとめ（出典つき）", what: "求人原稿と会社のページから読み取った項目だけを並べ、1項目ずつ出典を付ける。読み取れない項目は「不明」。", why: "誤った情報を出さないため。推測で埋めると、利用者も企業も信じられなくなる。", src: "チームの案／" + SRC },
+    { id: "learn", step: "karte", sel: '[data-h="learn"]', name: "ここで身につく専門知識", what: "求人原稿のどの段落から読み取ったかと、どの仕事・場面で身につくかを並べる。原稿に無い物は「シナリオ上の想定」と書く。", why: "この作品の核。利用者は自分に合うかが分かり、企業は自社で身につく専門性が伝わる。", src: SRC },
+    { id: "company", step: "karte", sel: '[data-h="company"]', name: "会社情報のURL（任意）", what: "貼ると、まとめの「不明」の一部が出典つきで埋まる。いまは kaisha.example の見本5社だけ。", why: "求人原稿だけでは分からない会社の様子を、出典つきで足すため。", src: "チームの案" },
+    { id: "reviews", step: "karte", sel: '[data-h="reviews"]', name: "自分で読んだ口コミを貼る（任意）", what: "貼った文のどの言葉が、どの場面・できごとに入るかを、まとめと年表と場面に印で出す。自動の読み取りはしない。", why: "口コミの印象を、働く場面で確かめられるようにするため。", src: "チームの案" },
+    { id: "look", step: "make", sel: '[data-h="look"]', name: "見た目と表情", what: "分身は2種類から選べる。場面のきもちに合わせて、元気・普通・しんどいの3つの表情に変わる。", why: "同じ人物がどの場面でも同じ見た目で出ることで、自分の分身として追いかけやすくする。", src: SRC },
+    fam === "g"
+      ? { id: "book", step: "life", sel: '[data-h="book"]', name: "専門知識の手帳（G案の主役）", what: "知識ごとに 知った→できる→任される→教えられる の4段で、どの場面で育ったかを刻む。", why: "「その会社でどんな専門知識が、どう育つか」を、時間の流れで見せるため。点数ではなく段の名前で見せる。", src: SRC }
+      : { id: "map", step: "life", sel: '[data-h="lifeline"]', name: "道の地図（H案の主役・年表を兼ねる）", what: "入社から分かれ道までの道と、6本の分かれ道。道の端に、持っていく知識が活きる（◎）・少し（△）・活きない（−）を出す。", why: "専門知識で人生の道がどう分かれるかを、1枚の地図で見せるため。", src: SRC },
+    { id: "deal", step: "life", sel: '[data-h="branches"]', name: "分かれ道で知識を配る（見せ場）", what: "身についた専門知識が6本の道に配られ、道ごとに活きる・活きないと理由が出る。ここから選び直せる。", why: "デモで一番伝えたい瞬間。知識が将来の選択肢をどう広げるかが、ひと目で分かる。", src: SRC },
   ];
   return (
     <div className={`lf pk pk-${fam} pk-${style}`}>
@@ -76,10 +95,10 @@ export default function PackApp({ style }: { style: StyleId }) {
           </Link>
           <p className="flex items-baseline gap-2">
             <span className="lf-h pk-brand text-[19px]">未来デバッグ</span>
-            <span className="text-[12px] text-[var(--lf-sub)]">{PACKS[style].name}</span>
+            <span className="text-[12px] text-[var(--lf-sub)]">{fam === "g" ? "G案" : "H案"}　{T.tag}</span>
           </p>
           <nav className="pk-steps ml-auto flex flex-wrap gap-1.5" aria-label="進み具合">
-            {LSTEPS.map((x, i) => (
+            {PSTEPS.map((x, i) => (
               <button key={x} type="button" aria-current={x === s.step} onClick={() => s.go(x)} className="px-3 py-1.5 text-[12.5px]">
                 <span className="pk-stepno">{i + 1}</span>
                 {LSTEP_LABEL[x]}
@@ -89,44 +108,51 @@ export default function PackApp({ style }: { style: StyleId }) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 pt-7 pb-20 sm:px-6">
-        {s.step !== "life" && <Title eyebrow={EYEBROW[fam][stepNo]} t={head.t} sub={head.sub} />}
-        {s.step === "jobs" && (
-          <section className="grid gap-6">
-            {PACKS[style].town && (
-              <figure className="pk-town">
-                <img src={art(style, "town")} alt="架空の町の模型。オフィス・工場・建設現場・物流倉庫・飲食店・家・学校が並ぶ" />
-                <figcaption className="text-[13px]">架空の町。5つの職場と、家・学校・空港があります。</figcaption>
-              </figure>
-            )}
-            <JobBoard s={s} thumb={(j) => <JobThumb c={c} job={j} />} cta={fam === "g" ? "この職場で、分身をつくる" : "この職場で、人形をつくる"} />
+        {s.step === "jobs" && <Entry c={c} s={s} />}
+        {s.step === "karte" && <Karte c={c} s={s} />}
+        {s.step === "make" && (
+          <section>
+            <Title eyebrow={`STEP 3　${T.make}`} t={T.make} sub="年齢と4つの条件を選ぶだけ。見た目は2種類から選べます。" />
+            <MakeForm s={s} avatar={<AvatarCard c={c} s={s} setLook={setLook} />} cta={T.start} />
           </section>
         )}
-        {s.step === "make" && <MakeForm s={s} avatar={<AvatarCard c={c} s={s} setLook={setLook} />} cta={fam === "g" ? "ゲームを始める" : "模型の生涯を動かす"} />}
         {s.step === "life" && <LifeView c={c} s={s} />}
         {s.step === "saves" && (
-          <SaveCompare
-            s={s}
-            thumb={(b) => {
-              const d = s.job.detailed?.[b];
-              const last = d?.chapters[d.chapters.length - 1];
-              const place = last ? last.place : simpleBranch(s.job, b, s.profile.age).place;
-              return (
-                <div className="pk-thumb">
-                  <img src={art(style, PLACE_ART[place])} alt="" className="pk-thumb-bg" />
-                  <img src={art(style, meArt(look, last?.mood ?? "普通"))} alt="" className="pk-thumb-me" />
-                  {last?.lifeEvent && <img src={art(style, eventArt(last.lifeEvent))} alt="" className="pk-thumb-ev" />}
-                </div>
-              );
-            }}
-          />
+          <section className="grid gap-6">
+            <Title eyebrow="STEP 5　人生を並べる" t={T.saves} sub={T.savesSub} />
+            {fam === "h" && <RoadMap c={c} s={s} compare />}
+            <FitTable s={s} />
+            <SaveCompare
+              s={s}
+              thumb={(b) => {
+                const d = s.job.detailed?.[b];
+                const last = d?.chapters[d.chapters.length - 1];
+                return (
+                  <div className="pk-thumb">
+                    <img src={art(style, destArt(s.job, b, s.profile.age))} alt="" className="pk-thumb-bg" />
+                    <img src={art(style, meArt(look, last?.mood ?? "普通"))} alt="" className="pk-thumb-me" />
+                    {last?.lifeEvent && <img src={art(style, eventArt(last.lifeEvent))} alt="" className="pk-thumb-ev" />}
+                  </div>
+                );
+              }}
+            />
+          </section>
         )}
       </main>
       <p className="pb-6 text-center text-[12px] text-[var(--lf-sub)]">この画面はすべて見本（ダミーデータ）です。登場する会社・人物・口コミはすべて架空です。絵は Higgsfield で生成したオリジナルです。</p>
       <InfoWindow
-        screen={`${PACKS[style].name.split("　")[0]}／${LSTEP_LABEL[s.step]}`}
+        screen={`${fam === "g" ? "G案（育つ）" : "H案（分かれる）"}／${LSTEP_LABEL[s.step]}`}
         screenNote={LNOTE[s.step]}
         items={help}
-        features={[...LFEATURES, `絵：${PACKS[style].touch}（Higgsfield で生成。public/packs/${style}/ にまとめて置き、src/lib/packs.ts で1枚ずつ差し替えられる）`]}
+        features={[
+          "最初の画面：一文と3つの段、見本の求人ボタン",
+          "求人URL → 会社のまとめ（出典つき・読み取れない項目は「不明」）→ 分身づくり → 生涯 → 人生を並べる",
+          "専門知識：どこで身につくか／4段の育ち方（知った・できる・任される・教えられる）／道ごとに活きる・少し活きる・活きない",
+          fam === "g" ? "G案の主役：専門知識の手帳と「専門知識 GET」のカットイン" : "H案の主役：道の地図（年表を兼ねる）と、道の端の知識の印",
+          "見せ場：分かれ道で、身につけた知識が6本の道に配られる",
+          ...LFEATURES.slice(1),
+          `絵：${PACKS[style].touch}（Higgsfield で生成。public/packs/${style}/ にまとめて置き、src/lib/packs.ts で1枚ずつ差し替えられる）`,
+        ]}
         accent="#1f8a7f"
         onBeforeFlash={(it) => {
           const h = help.find((x) => x.id === it.id);
@@ -147,7 +173,112 @@ function Title({ eyebrow, t, sub }: { eyebrow: string; t: string; sub: string })
   );
 }
 
-/* ---------- 求人の小さな絵 ---------- */
+/** 道の行き先の絵 */
+function destArt(job: Job, b: BranchId, age: number): PackKey {
+  if (b === "indep") return "ev-independent";
+  if (b === "relearn") return "ev-relearn";
+  if (b === "abroad") return "ev-overseas";
+  if (b === "other") return PLACE_ART[simpleBranch(job, b, age).place];
+  return PLACE_ART[job.place];
+}
+
+/* ---------- 1. 最初の画面（30秒で何の道具か分かる） ---------- */
+function Entry({ c, s }: { c: Ctx; s: LifeState }) {
+  const [url, setUrl] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const sample = JOBS[0];
+  const open = (u: string) => {
+    const j = jobByUrl(u);
+    if (!j) {
+      setMsg("見本では kyujin.example の5件だけ読み込めます。下の見本ボタンか、一覧から選んでください。");
+      return;
+    }
+    s.pickJob(j.id);
+    s.go("karte");
+  };
+  const ks = knowOf(sample);
+  return (
+    <section className="grid gap-10">
+      <div className="pk-hero" data-h="hero">
+        <div className="grid content-center gap-5">
+          <p className="pk-eyebrow text-[12px]">求人1件から、75歳までを試運転</p>
+          <h1 className="lf-h text-[34px] leading-[1.25] sm:text-[48px]">
+            <span className="w">応募する前に、</span>
+            <br />
+            <span className="w">その会社での</span>
+            <span className="w">人生を試運転。</span>
+          </h1>
+          <p className="max-w-[40ch] text-[15px] leading-8 text-[var(--lf-sub)]">
+            その会社で<b className="text-[var(--lf-ink)]">どんな専門知識が身につき</b>、その知識が<b className="text-[var(--lf-ink)]">転職・独立・海外でどう活きるか</b>を、分身が働く姿で試せます。予測ではなく、シナリオです。
+          </p>
+          <form
+            className="pk-urlbox"
+            data-h="url"
+            onSubmit={(e) => {
+              e.preventDefault();
+              open(url);
+            }}
+          >
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="求人のURLを貼る（https://kyujin.example/…）" aria-label="求人のURL" inputMode="url" className="lf-input min-w-0 flex-1 px-4 py-3 text-[15px]" />
+            <button type="submit" className="lf-btn px-5 py-3 text-[15px]">
+              読み込む
+            </button>
+          </form>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" className="lf-btn pk-bigbtn px-6 py-3.5 text-[16px]" onClick={() => open(sample.url)}>
+              見本の求人で試す ▶
+            </button>
+            <span className="text-[12.5px] text-[var(--lf-sub)]">{sample.company}「{sample.title}」</span>
+          </div>
+          {msg && <p className="text-[13px] font-bold text-[var(--lf-accent)]">{msg}</p>}
+        </div>
+        <ol className="pk-how">
+          <li>
+            <span className="pk-how-no">1</span>
+            <span className="pk-how-pic">
+              <img src={art(c.style, PLACE_ART[sample.place])} alt="" />
+              <span className="pk-how-url">kyujin.example/job/…</span>
+            </span>
+            <b>求人URLを貼る</b>
+            <span>会社のまとめが、出典つきで出る</span>
+          </li>
+          <li>
+            <span className="pk-how-no">2</span>
+            <span className="pk-how-pic is-know">
+              {ks.slice(0, 3).map((k, i) => (
+                <span key={k.id} className="pk-mini" style={{ animationDelay: `${0.3 + i * 0.25}s` }}>
+                  {k.name}
+                  <i>{STAGES[Math.min(3, i + 1)]}</i>
+                </span>
+              ))}
+            </span>
+            <b>身につく専門知識が分かる</b>
+            <span>どの仕事・場面で育つか</span>
+          </li>
+          <li>
+            <span className="pk-how-no">3</span>
+            <span className="pk-how-pic">
+              <img src={art(c.style, "cut-fork")} alt="" />
+            </span>
+            <b>75歳までの道を試す</b>
+            <span>知識が活きる道を選び直せる</span>
+          </li>
+        </ol>
+      </div>
+      <div className="grid gap-4">
+        {PACKS[c.style].town && (
+          <figure className="pk-town">
+            <img src={art(c.style, "town")} alt="架空の町の模型。オフィス・工場・建設現場・物流倉庫・飲食店・家・学校が並ぶ" />
+            <figcaption className="text-[13px]">架空の町。5つの職場の求人があります。</figcaption>
+          </figure>
+        )}
+        <h2 className="lf-h text-[20px]">または、架空の求人から選ぶ</h2>
+        <JobBoard s={s} thumb={(j) => <JobThumb c={c} job={j} />} cta="この会社のまとめを見る" next="karte" showUrl={false} showExtras={false} />
+      </div>
+    </section>
+  );
+}
+
 function JobThumb({ c, job }: { c: Ctx; job: Job }) {
   return (
     <span className="pk-thumb block">
@@ -158,7 +289,113 @@ function JobThumb({ c, job }: { c: Ctx; job: Job }) {
   );
 }
 
-/* ---------- 分身づくりの見本 ---------- */
+/* ---------- 2. 会社のまとめ（出典・不明） ---------- */
+function Karte({ c, s }: { c: Ctx; s: LifeState }) {
+  const k = karteOf(s.job, s.companyInfo);
+  const ks = knowOf(s.job);
+  const host = s.job.url.replace("https://", "");
+  return (
+    <section className="grid gap-6" data-h="karte">
+      <div className="pk-karte-head">
+        <span className="pk-karte-pic">
+          <img src={art(c.style, PLACE_ART[s.job.place])} alt="" />
+        </span>
+        <div className="grid gap-2">
+          <p className="pk-eyebrow text-[12px]">STEP 2　会社のまとめ</p>
+          <h1 className="lf-h text-[26px] leading-tight sm:text-[34px]">
+            {s.job.company}は、
+            <br className="sm:hidden" />
+            こういう会社です
+          </h1>
+          <p className="text-[15px] leading-8">
+            {s.job.industry}の会社。{s.job.body[0]}
+            <br />
+            ここでは <b>{ks.map((x) => x.name).join("・")}</b> が身につく筋書きです。
+          </p>
+          <p className="text-[12.5px] text-[var(--lf-sub)]">
+            読み取った元：求人原稿（{host}）{s.companyInfo ? `・会社の公式ページ（${s.companyInfo.url.replace("https://", "")}）` : "・会社情報のURLは未入力"}　｜　読み取れた項目 {k.known}・不明 {k.unknown}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+        <div className="grid content-start gap-5">
+          <div className="lf-card p-5" data-h="learn">
+            <p className="lf-h text-[18px]">ここで身につく専門知識</p>
+            <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">どの仕事・場面で身につくかと、求人原稿のどこから読み取ったかを並べています。</p>
+            <ul className="mt-3 grid gap-3">
+              {ks.map((x) => (
+                <li key={x.id} className="pk-learn">
+                  <p className="lf-h text-[16px]">{x.name}</p>
+                  <p className="text-[13.5px] leading-6">{x.what}</p>
+                  <p className="text-[12.5px] text-[var(--lf-sub)]">身につく場面：{x.where}</p>
+                  {x.src ? (
+                    <p className="pk-src">
+                      出典：求人原稿 {x.src.para}段落目「{x.src.quote}」
+                    </p>
+                  ) : (
+                    <p className="pk-src is-guess">出典なし：求人原稿に書いていないため、シナリオ上の想定です</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="lf-card p-5">
+            <p className="lf-h text-[18px]">読み取った項目</p>
+            <table className="pk-karte mt-3 w-full text-[13.5px]">
+              <tbody>
+                {k.items.map((it) => (
+                  <tr key={it.label} className={it.value ? "" : "is-unknown"}>
+                    <th>{it.label}</th>
+                    <td>
+                      {it.value ?? <b className="pk-unknown">不明</b>}
+                      {it.value && it.src && (
+                        <span className="pk-src">
+                          {it.src.kind}（{it.src.where}）
+                        </span>
+                      )}
+                      {!it.value && it.why && <span className="pk-src is-guess">{it.why}</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="grid content-start gap-5">
+          <CompanyExtras s={s} stack />
+          <div className="lf-card p-5" data-h="reflect">
+            <p className="lf-h text-[16px]">口コミ・会社情報が入る場面</p>
+            {s.vibes.length === 0 ? (
+              <p className="mt-2 text-[13px] text-[var(--lf-sub)]">口コミを貼るか会社情報のURLを入れると、どの言葉がどの場面に入るかがここに出ます。</p>
+            ) : (
+              <ul className="mt-2 grid gap-2">
+                {s.vibes.map((v) => {
+                  const ch = s.job.trunk[v.at];
+                  return (
+                    <li key={v.id} className={`pk-reflect is-${v.tone}`}>
+                      <span className="text-[12.5px]">
+                        {v.from}「{v.quote}」
+                      </span>
+                      <span className="text-[13px] font-bold">
+                        → {ch.label}（{PLACE_LABEL[ch.place]}）の場面に「{v.event}」
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <button type="button" className="lf-btn pk-bigbtn justify-self-start px-6 py-3.5 text-[16px]" onClick={() => s.go("make")}>
+            この会社で、{COPY[c.fam].make} ▶
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- 3. 分身づくりの見本 ---------- */
 function AvatarCard({ c, s, setLook }: { c: Ctx; s: LifeState; setLook: (l: Look) => void }) {
   return (
     <div className="grid w-full gap-3" data-h="look">
@@ -185,7 +422,7 @@ function AvatarCard({ c, s, setLook }: { c: Ctx; s: LifeState; setLook: (l: Look
   );
 }
 
-/* ---------- 生涯の画面 ---------- */
+/* ---------- 4. 生涯 ---------- */
 function LifeView({ c, s }: { c: Ctx; s: LifeState }) {
   const ch = s.chapter;
   const simple = !!s.branch && !s.detail;
@@ -194,20 +431,22 @@ function LifeView({ c, s }: { c: Ctx; s: LifeState }) {
     <section className="grid gap-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="pk-eyebrow text-[12px]">{EYEBROW[c.fam][2]}</p>
-          <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[32px]">
+          <p className="pk-eyebrow text-[12px]">STEP 4　{COPY[c.fam].life}</p>
+          <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">
             {s.job.company}で働く、{s.profile.age}歳からの生涯
           </h1>
         </div>
         <p className="text-[12.5px] text-[var(--lf-sub)]">予測ではなく、シナリオ（筋書き）です。合否・点数・％は出しません。</p>
       </div>
-      <LifeLine c={c} s={s} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+      {c.fam === "g" ? <LifeLine c={c} s={s} /> : <RoadMap c={c} s={s} />}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 content-start gap-4">
           <Stage key={`${s.idx}-${s.branch ?? ""}-${c.look}`} c={c} s={s} ch={ch} prev={s.prev} />
+          {s.atFork && <ForkDeal c={c} s={s} />}
           <div className="lf-card pk-log p-5">
             <p className="pk-eyebrow text-[12px]">
-              {age}歳　{ch.label ? `${ch.label}　` : ""}{PLACE_LABEL[ch.place]}
+              {age}歳　{ch.label ? `${ch.label}　` : ""}
+              {PLACE_LABEL[ch.place]}
             </p>
             <ul className="mt-2 grid gap-1.5">
               {ch.events.map((e) => (
@@ -235,7 +474,7 @@ function LifeView({ c, s }: { c: Ctx; s: LifeState }) {
               )}
               {s.atEnd && (
                 <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go("saves")}>
-                  {c.fam === "g" ? "セーブデータを並べる" : "模型を棚に並べる"}
+                  {COPY[c.fam].saves} ▶
                 </button>
               )}
               {s.branch && (
@@ -245,26 +484,172 @@ function LifeView({ c, s }: { c: Ctx; s: LifeState }) {
               )}
             </div>
           </div>
-          {s.atFork && (
-            <div className="grid gap-0">
-              <div className="pk-forkban">
-                <img src={art(c.style, "cut-fork")} alt="" />
-                <p className="lf-h">分かれ道</p>
-              </div>
-              <BranchPick s={s} title="ここから、どの道を見る？" />
-            </div>
+          {simple && (
+            <>
+              <SimpleBranchView s={s} />
+              <CarryList s={s} b={s.branch!} />
+            </>
           )}
-          {simple && <SimpleBranchView s={s} />}
         </div>
-        <aside>
-          <StatsPanel job={s.job} ch={ch} prev={s.prev} />
+        <aside className="grid content-start gap-4">
+          <KnowBook c={c} s={s} />
+          <details className="pk-more">
+            <summary className="lf-h cursor-pointer text-[14px]">8つの力と暮らし（高・中・低）</summary>
+            <div className="mt-3">
+              <StatsPanel job={s.job} ch={ch} prev={s.prev} />
+            </div>
+          </details>
         </aside>
       </div>
     </section>
   );
 }
 
-/* ---------- 上の年表（今の年齢 → 75歳） ---------- */
+/* 専門知識の手帳（G）／持っていく知識（H） */
+function KnowBook({ c, s }: { c: Ctx; s: LifeState }) {
+  const gains = gainsAt(s.job, s.idx, s.forkIdx, s.branch);
+  const shines = shinesAt(s.job, s.idx, s.forkIdx, s.branch);
+  return (
+    <div className="lf-card pk-book p-4" data-h="book">
+      <p className="lf-h text-[15px]">{COPY[c.fam].book}</p>
+      <ul className="mt-3 grid gap-3">
+        {knowOf(s.job).map((k) => {
+          const st = stageAt(k, s.idx, s.forkIdx, s.branch);
+          const g = gains.find((x) => x.k.id === k.id);
+          const sh = shines.some((x) => x.id === k.id);
+          const fit = s.branch ? k.fits[s.branch] : null;
+          return (
+            <li key={k.id} className={`pk-kcard ${st < 0 ? "is-not" : ""} ${g ? "is-new" : ""} ${sh ? "is-shine" : ""}`}>
+              <p className="flex items-center justify-between gap-2">
+                <b className="text-[14px]">{k.name}</b>
+                {g && <span className="pk-badge">{g.from < 0 ? "NEW" : "UP"}</span>}
+                {sh && <span className="pk-badge is-shine">活きた</span>}
+              </p>
+              <ol className="pk-ladder" aria-label={`${k.name}の育ち具合：${st < 0 ? "まだ" : STAGES[st]}`}>
+                {STAGES.map((n, i) => (
+                  <li key={n} className={i <= st ? "on" : ""}>
+                    {n}
+                  </li>
+                ))}
+              </ol>
+              {st < 0 ? <p className="text-[11.5px] text-[var(--lf-sub)]">まだ。{k.where}</p> : <p className="text-[11.5px] text-[var(--lf-sub)]">{k.where}</p>}
+              {fit && <p className={`pk-fitline fit-${fit.fit}`}>この道では：{fit.fit}（{fit.why}）</p>}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-2 text-[11px] leading-5 text-[var(--lf-sub)]">段の名前で育ち方を見せます。点数ではありません。</p>
+    </div>
+  );
+}
+
+/* 見せ場：分かれ道で、身につけた知識を6本の道に配る */
+function ForkDeal({ c, s }: { c: Ctx; s: LifeState }) {
+  const ks = knowOf(s.job).filter((k) => stageAt(k, s.forkIdx, s.forkIdx, null) >= 0);
+  return (
+    <div className="pk-deal" data-h="branches">
+      <div className="pk-deal-head">
+        <img src={art(c.style, "cut-fork")} alt="" />
+        <div>
+          <p className="pk-eyebrow text-[12px]">分かれ道　{ageAt(s.chapter, s.profile.age)}歳</p>
+          <p className="lf-h text-[20px] sm:text-[24px]">いま持っている専門知識は、どの道で活きる？</p>
+          <p className="mt-1 text-[12.5px]">◎活きる　△少し活きる　−活きない（筋書きの中での使われ方です。点数ではありません）</p>
+        </div>
+      </div>
+      <div className="pk-roads">
+        {BRANCHES.map((b, i) => {
+          const d = s.job.detailed?.[b.id];
+          const seen = s.saves.includes(b.id);
+          return (
+            <button key={b.id} type="button" className="pk-road" style={{ animationDelay: `${0.15 + i * 0.12}s` }} onClick={() => s.choose(b.id)}>
+              <span className="pk-road-pic">
+                <img src={art(c.style, destArt(s.job, b.id, s.profile.age))} alt="" />
+                <span className="pk-road-name lf-h">{b.label}</span>
+              </span>
+              <ul className="pk-road-ks">
+                {ks.map((k, j) => {
+                  const f = k.fits[b.id];
+                  return (
+                    <li key={k.id} className={`fit-${f.fit}`} style={{ animationDelay: `${0.6 + i * 0.12 + j * 0.1}s` }}>
+                      <span className="pk-mark">{FIT_MARK[f.fit]}</span>
+                      <span>
+                        <b>{k.name}</b>
+                        <small>{f.why}</small>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <span className="pk-road-foot">
+                {d ? "場面つき（作り込み）" : "簡易表示"}
+                {seen && "・見た道"}
+                <b>この道を見る ▶</b>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** 簡易表示の道で、持っていった知識 */
+function CarryList({ s, b }: { s: LifeState; b: BranchId }) {
+  const ks = knowOf(s.job).filter((k) => stageAt(k, s.forkIdx, s.forkIdx, null) >= 0);
+  return (
+    <div className="lf-card p-5">
+      <p className="lf-h text-[16px]">この道に持っていった専門知識</p>
+      <ul className="mt-2 grid gap-1.5 text-[13.5px]">
+        {ks.map((k) => (
+          <li key={k.id} className={`pk-fitline fit-${k.fits[b].fit}`}>
+            {FIT_MARK[k.fits[b].fit]} {k.name}：{k.fits[b].fit}（{k.fits[b].why}）
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** 人生を並べる：知識 × 道 の表 */
+function FitTable({ s }: { s: LifeState }) {
+  const ks = knowOf(s.job);
+  return (
+    <div className="lf-card overflow-x-auto p-5" data-h="saves">
+      <p className="lf-h text-[17px]">専門知識は、どの道で活きたか</p>
+      <table className="pk-fittable mt-3 text-[13px]">
+        <thead>
+          <tr>
+            <th />
+            {BRANCHES.map((b) => (
+              <th key={b.id} className={s.saves.includes(b.id) ? "is-seen" : ""}>
+                {b.short}
+                {s.saves.includes(b.id) && <small>見た道</small>}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ks.map((k) => (
+            <tr key={k.id}>
+              <th>{k.name}</th>
+              {BRANCHES.map((b) => {
+                const f = k.fits[b.id];
+                return (
+                  <td key={b.id} className={`fit-${f.fit}`} title={f.why}>
+                    <span className="pk-mark">{FIT_MARK[f.fit]}</span>
+                    <small>{f.why}</small>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------- G：上の年表（今の年齢 → 75歳） ---------- */
 function LifeLine({ c, s }: { c: Ctx; s: LifeState }) {
   const start = s.profile.age;
   const span = Math.max(1, END_AGE - start);
@@ -300,14 +685,16 @@ function LifeLine({ c, s }: { c: Ctx; s: LifeState }) {
       <ol ref={list} className="pk-nodes" data-h="debug" aria-label="場面の年表。過去の場面を押すと戻れます">
         {s.chapters.map((ch, i) => {
           const key: PackKey = ch.lifeEvent ? eventArt(ch.lifeEvent) : PLACE_ART[ch.place];
+          const g = gainsAt(s.job, i, s.forkIdx, s.branch);
           return (
             <li key={i}>
               <button type="button" disabled={i > s.idx} aria-current={i === s.idx} onClick={() => s.jump(i)} className={`pk-node ${ch.fork ? "is-fork" : ""} ${ch.down ? "is-down" : ""}`}>
                 <span className="pk-node-pic">
                   <img src={art(c.style, key)} alt="" loading="lazy" />
+                  {(ch.vibes?.length ?? 0) > 0 && <span className="pk-node-rev" title="口コミ・会社情報が入った場面">口</span>}
                 </span>
                 <span className="pk-node-age">{chapterLabel(ch, start)}</span>
-                <span className="pk-node-sub">{ch.fork ? "◆分かれ道" : ch.lifeEvent ? ch.lifeEvent.replace(/（.*?）/g, "") : PLACE_LABEL[ch.place]}</span>
+                <span className="pk-node-sub">{ch.fork ? "◆分かれ道" : g.length ? `＋${g[0].k.name}` : ch.lifeEvent ? ch.lifeEvent.replace(/（.*?）/g, "") : PLACE_LABEL[ch.place]}</span>
               </button>
             </li>
           );
@@ -322,6 +709,123 @@ function LifeLine({ c, s }: { c: Ctx; s: LifeState }) {
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+/* ---------- H：道の地図（年表を兼ねる） ---------- */
+const TRUNK_X = [7, 16, 25, 34];
+const FORK = { x: 40, y: 50 };
+const ROAD_Y = [10, 26, 42, 58, 74, 90];
+const DEST_X = 84;
+
+function RoadMap({ c, s, compare }: { c: Ctx; s: LifeState; compare?: boolean }) {
+  const ks = knowOf(s.job).filter((k) => stageAt(k, s.forkIdx, s.forkIdx, null) >= 0);
+  const start = s.profile.age;
+  const roadPath = (y: number) => `M${FORK.x} ${FORK.y} C ${FORK.x + 9} ${FORK.y}, ${FORK.x + 6} ${y}, ${FORK.x + 15} ${y} L ${DEST_X} ${y}`;
+  const chosen = s.branch;
+  const detailN = s.detail?.chapters.length ?? 0;
+  const stopX = (j: number) => FORK.x + 18 + (j * (DEST_X - FORK.x - 22)) / Math.max(1, detailN - 1);
+  const pos = (i: number) => {
+    if (i <= s.forkIdx) return { x: TRUNK_X[i] ?? FORK.x, y: FORK.y };
+    const bi = BRANCHES.findIndex((b) => b.id === chosen);
+    return { x: stopX(i - s.forkIdx - 1), y: ROAD_Y[bi] };
+  };
+  const me = compare ? null : pos(s.idx);
+  const wrap = useRef<HTMLDivElement>(null);
+  const meX = me?.x ?? 0;
+  useEffect(() => {
+    const w = wrap.current;
+    if (!w || w.scrollWidth <= w.clientWidth) return;
+    w.scrollTo({ left: s.atFork ? w.scrollWidth : Math.max(0, (meX / 100) * w.scrollWidth - w.clientWidth * 0.5), behavior: "smooth" });
+  }, [meX, s.atFork]);
+  return (
+    <div ref={wrap} className="pk-mapwrap" data-h="lifeline">
+      <div className={`pk-map ${s.atFork && !compare ? "is-fork" : ""}`}>
+        {PACKS[c.style].town && <img src={art(c.style, "town")} alt="" className="pk-map-bg" />}
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pk-map-svg" aria-hidden>
+          <path d={`M${TRUNK_X[0]} ${FORK.y} L ${FORK.x} ${FORK.y}`} className="pk-r is-trunk" />
+          {BRANCHES.map((b, i) => (
+            <path key={b.id} d={roadPath(ROAD_Y[i])} className={`pk-r ${chosen === b.id ? "is-chosen" : chosen && !compare ? "is-dim" : ""} ${s.saves.includes(b.id) ? "is-seen" : ""}`} style={{ animationDelay: `${i * 0.12}s` }} />
+          ))}
+        </svg>
+        <p className="pk-map-legend">
+          {start}歳 → {END_AGE}歳　持っていく知識：
+          {ks.map((k, i) => (
+            <span key={k.id}>
+              {"①②③④⑤"[i]}
+              {k.name}
+            </span>
+          ))}
+        </p>
+        <span className="pk-map-age" style={{ left: `${TRUNK_X[0]}%`, top: `${FORK.y + 12}%` }}>
+          {start}歳
+        </span>
+        {s.job.trunk.map((ch, i) => (
+          <button
+            key={i}
+            type="button"
+            disabled={compare || i > s.idx}
+            aria-current={!compare && i === s.idx}
+            onClick={() => s.jump(i)}
+            className={`pk-stop ${ch.fork ? "is-fork" : ""}`}
+            style={{ left: `${TRUNK_X[i]}%`, top: `${FORK.y}%` }}
+          >
+            <span className="pk-stop-pic">
+              <img src={art(c.style, PLACE_ART[ch.place])} alt="" />
+            </span>
+            {(s.chapters[i]?.vibes?.length ?? 0) > 0 && <span className="pk-node-rev">口</span>}
+            <span className="pk-stop-label">{chapterLabel(ch, start)}</span>
+          </button>
+        ))}
+        {s.detail &&
+          !compare &&
+          s.detail.chapters.map((ch, j) => {
+            const i = s.forkIdx + 1 + j;
+            const p = pos(i);
+            return (
+              <button key={j} type="button" disabled={i > s.idx} aria-current={i === s.idx} onClick={() => s.jump(i)} className="pk-stop is-small" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+                <span className="pk-stop-pic">
+                  <img src={art(c.style, ch.lifeEvent ? eventArt(ch.lifeEvent) : PLACE_ART[ch.place])} alt="" />
+                </span>
+                <span className="pk-stop-label">{ageAt(ch, start)}歳</span>
+              </button>
+            );
+          })}
+        {BRANCHES.map((b, i) => {
+          const pick = s.atFork && !compare;
+          const Tag = pick ? "button" : "div";
+          return (
+            <Tag
+              key={b.id}
+              {...(pick ? { type: "button" as const, onClick: () => s.choose(b.id) } : {})}
+              className={`pk-dest ${chosen === b.id ? "is-chosen" : chosen && !compare ? "is-dim" : ""} ${s.saves.includes(b.id) ? "is-seen" : ""} ${pick ? "is-pick" : ""}`}
+              style={{ left: `${DEST_X}%`, top: `${ROAD_Y[i]}%`, animationDelay: `${0.4 + i * 0.12}s` }}
+            >
+              <span className="pk-dest-pic">
+                <img src={art(c.style, destArt(s.job, b.id, start))} alt="" />
+              </span>
+              <span className="pk-dest-txt">
+                <b>{b.short}</b>
+                <span className="pk-dest-ks">
+                  {ks.map((k, j) => (
+                    <i key={k.id} className={`fit-${k.fits[b.id].fit}`} title={`${k.name}：${k.fits[b.id].fit}（${k.fits[b.id].why}）`}>
+                      {"①②③④⑤"[j]}
+                      {FIT_MARK[k.fits[b.id].fit]}
+                    </i>
+                  ))}
+                </span>
+              </span>
+            </Tag>
+          );
+        })}
+        {me && (
+          <span className="pk-walker" style={{ left: `${me.x}%`, top: `${me.y}%` }}>
+            <img src={art(c.style, meArt(c.look, s.chapter.mood))} alt="いまの分身" />
+          </span>
+        )}
+        {s.atFork && !compare && <p className="pk-map-call lf-h">道を押すと、その道に進みます</p>}
+      </div>
     </div>
   );
 }
@@ -341,9 +845,10 @@ const CUT_EN: Record<CutKind, string> = { ほめられた: "GOOD JOB", ピンチ
 
 function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: Chapter }) {
   const reduced = usePrefersReducedMotion();
-  const ups = changesOf(prev, ch, s.job);
-  const upList = ups.filter((u) => u.up);
-  const fx = useFx(!!ch.cutin, upList.length > 0, reduced, 2600, 2800, 2600);
+  const ups = changesOf(prev, ch, s.job).filter((u) => u.up);
+  const shines: Know[] = shinesAt(s.job, s.idx, s.forkIdx, s.branch);
+  const gains = gainsAt(s.job, s.idx, s.forkIdx, s.branch).filter((g) => !shines.some((x) => x.id === g.k.id));
+  const fx = useFx(!!ch.cutin, gains.length + shines.length + ups.length > 0, reduced, 2600, 2800, 3200);
   const [k, setK] = useState(0);
   useEffect(() => {
     if (reduced) return;
@@ -360,7 +865,8 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
   const act = ch.down ? "down" : ch.act;
   const cut = ch.cutin;
   const cutKey = cut ? cutArt(cut.kind, ch, cut.line) : "place";
-  const cutWho = cut ? whoArt(cut.who, c.look, cut.kind === "ピンチ" ? "しんどい" : "元気") ?? meArt(c.look, "元気") : null;
+  const cutWho = cut ? (whoArt(cut.who, c.look, cut.kind === "ピンチ" ? "しんどい" : "元気") ?? meArt(c.look, "元気")) : null;
+  const vibeTalk = new Set((ch.vibes ?? []).map((v) => v.talk.text));
 
   return (
     <div className="pk-stagewrap" data-h="scene">
@@ -375,8 +881,11 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
           {act === "down" && <span className="pk-sweat" aria-hidden />}
         </span>
         {talk && (
-          <p key={k} className={`pk-bubble ${talk.who === "me" ? "is-me" : ""} ${talk.text.startsWith("（") ? "is-think" : ""}`} style={{ left: `${Math.min(80, Math.max(20, xOf(talk.who)))}%` }}>
-            <b>{nameOf(s.job, talk.who)}</b>
+          <p key={k} className={`pk-bubble ${talk.who === "me" ? "is-me" : ""} ${talk.text.startsWith("（") ? "is-think" : ""} ${vibeTalk.has(talk.text) ? "is-review" : ""}`} style={{ left: `${Math.min(80, Math.max(20, xOf(talk.who)))}%` }}>
+            <b>
+              {nameOf(s.job, talk.who)}
+              {vibeTalk.has(talk.text) && <em>口コミから</em>}
+            </b>
             {talk.text}
           </p>
         )}
@@ -390,7 +899,16 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
           <ul className="pk-vibes">
             {ch.vibes!.map((v) => (
               <li key={v.id} className={`lf-vibe is-${v.tone} px-2 py-0.5 text-[11.5px]`}>
-                {v.from}：{v.label}
+                {v.from}「{v.quote.length > 16 ? `${v.quote.slice(0, 16)}…` : v.quote}」
+              </li>
+            ))}
+          </ul>
+        )}
+        {gains.length > 0 && fx.phase === "done" && (
+          <ul className="pk-gainchips">
+            {gains.map((g) => (
+              <li key={g.k.id}>
+                ＋{g.k.name}　{g.from < 0 ? "知った" : `${STAGES[g.from]}→${STAGES[g.to]}`}
               </li>
             ))}
           </ul>
@@ -420,18 +938,37 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
           </button>
         )}
         {fx.phase === "rank" && (
-          <button type="button" className="pk-rank" onClick={fx.skip} aria-label="演出を飛ばす">
+          <button type="button" className={`pk-rank ${gains.length + shines.length ? "is-gain" : ""}`} onClick={fx.skip} aria-label="演出を飛ばす">
             <img src={art(c.style, "cut-rankup")} alt="" className="pk-cut-bg" />
             <img src={art(c.style, meArt(c.look, "元気"))} alt="" className="pk-rank-me" />
             <span className="pk-rank-box">
-              <span className="lf-h pk-rank-title">RANK UP!</span>
-              <span className="flex flex-wrap justify-center gap-1.5">
-                {upList.slice(0, 6).map((u, i) => (
-                  <span key={u.name} className="pk-up" style={{ animationDelay: `${0.25 + i * 0.12}s` }}>
-                    {u.name} {u.from}→<b>{u.to}</b>
-                  </span>
-                ))}
-              </span>
+              <span className="lf-h pk-rank-title">{shines.length ? "知識が活きた!" : gains.length ? COPY[c.fam].gain : "RANK UP!"}</span>
+              {(shines.length > 0 || gains.length > 0) && (
+                <span className="pk-kgain">
+                  {shines.map((x) => (
+                    <span key={x.id} className="pk-kcardbig is-shine">
+                      <b>{x.name}</b>
+                      <small>{x.fits[s.branch!].why}</small>
+                    </span>
+                  ))}
+                  {gains.slice(0, shines.length ? 1 : 2).map((g, i) => (
+                    <span key={g.k.id} className="pk-kcardbig" style={{ animationDelay: `${0.3 + i * 0.2}s` }}>
+                      <b>{g.k.name}</b>
+                      <span className="pk-kstep">{g.from < 0 ? "知った" : `${STAGES[g.from]} → ${STAGES[g.to]}`}</span>
+                      <small>{g.k.where}</small>
+                    </span>
+                  ))}
+                </span>
+              )}
+              {ups.length > 0 && (
+                <span className="flex flex-wrap justify-center gap-1.5">
+                  {ups.slice(0, 4).map((u, i) => (
+                    <span key={u.name} className="pk-up" style={{ animationDelay: `${0.6 + i * 0.12}s` }}>
+                      {u.name} {u.from}→<b>{u.to}</b>
+                    </span>
+                  ))}
+                </span>
+              )}
             </span>
           </button>
         )}
@@ -442,4 +979,5 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
     </div>
   );
 }
+
 

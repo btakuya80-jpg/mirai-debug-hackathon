@@ -7,10 +7,10 @@ import { Figure, Screen } from "./j/Film";
 
 /* トップページ：Higgsfield の絵で作り直した G案・H案（4ページ）と、I・J案を並べる */
 const PACK_PLANS: { href: string; style: StyleId; name: string; look: string; aim: string; bg: string; place: string; me: string; other: string }[] = [
-  { href: "/g", style: "g1", name: "G-1　育成シミュレーション（平面イラスト）", look: "くっきりした線と平らな塗り／クリームと青緑", aim: "職場の絵を画面いっぱいに出し、2頭身の分身と上司・同僚が並んで働く。ゲームの画面のような太い線と影。", bg: "bg-factory", place: "工場", me: "me-m-genki", other: "boss" },
-  { href: "/g2", style: "g2", name: "G-2　育成シミュレーション（絵の具）", look: "絵の具の筆の跡／紙の色とテラコッタ", aim: "G-1と同じ遊び方を、絵本のようなやわらかい絵で。手書き風の文字と紙の手ざわり。", bg: "bg-food", place: "飲食店", me: "me-f-genki", other: "senpai" },
-  { href: "/h", style: "h1", name: "H-1　ジオラマ（模型）", look: "粘土とプラスチックの模型／やさしい昼の光", aim: "町と職場を小さな模型にして、机の上からのぞきこむ。人形の分身が職場・家・学校・海外を行き来する。", bg: "bg-office", place: "オフィス", me: "me-m-genki", other: "peer" },
-  { href: "/h2", style: "h2", name: "H-2　ジオラマ（紙と木）", look: "紙工作と木のおもちゃ／夕方の金色の光", aim: "H-1と同じ遊び方を、紙と木の手づくりの模型で。あたたかい夕方の色。", bg: "bg-construction", place: "建設現場", me: "me-f-genki", other: "boss" },
+  { href: "/g", style: "g1", name: "G案　専門知識が「育つ」", look: "主役：専門知識の手帳／平面イラスト", aim: "場面ごとに、その会社で身につく専門知識が 知った→できる→任される→教えられる と育つ。「専門知識 GET」のカットインと手帳で、どの仕事で何が身につくかを刻む。", bg: "bg-factory", place: "工場", me: "me-m-genki", other: "boss" },
+  { href: "/g2", style: "g2", name: "G案の別タッチ（絵の具）", look: "中身はG案と同じ／絵の具の筆の跡", aim: "G案と同じ中身を、絵本のようなやわらかい絵で。", bg: "bg-food", place: "飲食店", me: "me-f-genki", other: "senpai" },
+  { href: "/h", style: "h1", name: "H案　専門知識で道が「分かれる」", look: "主役：道の地図／模型のジオラマ", aim: "町の模型の上の道の地図が年表。持っていく知識が、残る・同業・異業種・独立・学び直し・海外のどの道で活きる／活きないかを、地図の上で見せる。", bg: "bg-office", place: "オフィス", me: "me-m-genki", other: "peer" },
+  { href: "/h2", style: "h2", name: "H案の別タッチ（紙と木）", look: "中身はH案と同じ／紙工作と木のおもちゃ", aim: "H案と同じ中身を、紙と木の手づくりの模型で。", bg: "bg-construction", place: "建設現場", me: "me-f-genki", other: "boss" },
 ];
 
 const OLD = [
@@ -54,10 +54,10 @@ export default function NewPlans() {
   return (
     <section className="mt-10">
       <p className="text-[13px] font-bold tracking-[0.12em] text-[#1f5fd1]">NEW　Higgsfield の絵で作り直し</p>
-      <h2 className="mt-1 text-[24px] font-bold sm:text-[30px]">G案とH案を、4つの絵のタッチで</h2>
+      <h2 className="mt-1 text-[24px] font-bold sm:text-[30px]">専門知識が主役のG案（育つ）とH案（分かれる）</h2>
       <p className="mt-2 max-w-[72ch] text-[15px] leading-8 text-[#3d4759]">
-        同じ人物（分身・上司・先輩・同期）が、どの場面でも同じ見た目で出るように描いた絵のセットを、4つのタッチで作りました。
-        4ページとも中身は同じです：求人5件（URL貼り付け可）、会社情報のURLと自分で読んだ口コミ（任意）、年齢から75歳までの生涯、分かれ道6種、カットイン・ランクアップ、セーブデータの比較、過去に戻って選び直す（デバッグ）。
+        この作品の核は「その会社でどんな専門知識が身につき、その後の人生でどう活きるか」。求人URLを貼ると、まず出典つきの会社のまとめ（読み取れない項目は「不明」）、そのあと分身が働く生涯へ進みます。
+        見せ場は、分かれ道で身につけた知識が6本の道に配られ、活きる・活きないがひと目で分かる瞬間です。G案は知識が「育つ」過程を、H案は知識で道が「分かれる」様子を主役にしました。
       </p>
       <ul className="mt-6 grid gap-5 md:grid-cols-2">
         {PACK_PLANS.map((p) => (

@@ -249,3 +249,174 @@
 @media (prefers-reduced-motion: reduce) {
   .pk-bg { animation: none; }
 }
+
+/* =====================================================================
+   2026-11-06 作り直し：専門知識が主役（G＝育つ／H＝分かれる）
+   ===================================================================== */
+.pk { --fit-good: #1f8a52; --fit-mid: #b07a12; --fit-none: #8a8f96; }
+.fit-活きる { --fc: var(--fit-good); }
+.fit-少し活きる { --fc: var(--fit-mid); }
+.fit-活きない { --fc: var(--fit-none); }
+
+/* ---- 最初の画面 ---- */
+.pk-hero { display: grid; gap: 28px; align-items: center; padding: 28px; border-radius: calc(var(--lf-radius) * 1.4); background: var(--lf-card); box-shadow: var(--lf-shadow); }
+.pk-g1 .pk-hero { border: var(--pk-border); }
+@media (min-width: 1024px) { .pk-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); padding: 40px; } }
+.pk-urlbox { display: flex; gap: 8px; max-width: 560px; }
+.pk-bigbtn { box-shadow: 0 5px 0 color-mix(in srgb, var(--lf-accent) 55%, #000) !important; }
+.pk-how { display: grid; gap: 12px; }
+.pk-how li { position: relative; display: grid; grid-template-columns: 132px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; align-items: center; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--lf-accent) 7%, var(--lf-card)); animation: pk-in 0.6s both; }
+.pk-how li:nth-child(2) { animation-delay: 0.15s; } .pk-how li:nth-child(3) { animation-delay: 0.3s; }
+.pk-how-no { position: absolute; left: -8px; top: -8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--lf-accent); color: #fff; font-weight: 800; font-size: 13px; z-index: 2; }
+.pk-how-pic { grid-row: 1 / 3; position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 10px; background: var(--pk-table); }
+.pk-how-pic img { width: 100%; height: 100%; object-fit: cover; }
+.pk-how li > b { font-size: 16px; align-self: end; }
+.pk-how li > span:last-child { font-size: 12.5px; color: var(--lf-sub); align-self: start; }
+.pk-how-url { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 2px 6px; border-radius: 6px; background: #fff; color: #2b2622; font-size: 10px; font-family: ui-monospace, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-how-pic.is-know { display: grid; align-content: center; gap: 4px; padding: 6px; }
+.pk-mini { display: flex; justify-content: space-between; gap: 6px; padding: 2px 7px; border-radius: 6px; background: #fff; color: #2b2622; font-size: 10.5px; font-weight: 700; animation: pk-chip 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.pk-mini i { font-style: normal; color: var(--fit-good); }
+
+/* ---- 会社のまとめ ---- */
+.pk-karte-head { display: grid; gap: 18px; align-items: center; }
+@media (min-width: 768px) { .pk-karte-head { grid-template-columns: 240px minmax(0, 1fr); } }
+.pk-karte-pic { display: block; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--lf-radius); background: var(--pk-table); box-shadow: var(--lf-shadow); }
+.pk-karte-pic img { width: 100%; height: 100%; object-fit: cover; }
+.pk-h .pk-karte-pic img { object-fit: contain; }
+.pk-learn { display: grid; gap: 3px; padding: 12px 14px; border-radius: 12px; border-left: 5px solid var(--lf-accent); background: color-mix(in srgb, var(--lf-accent) 6%, var(--lf-card)); }
+.pk-src { display: block; margin-top: 2px; font-size: 11.5px; color: var(--lf-sub); }
+.pk-src::before { content: "出典"; display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, var(--lf-ink) 10%, transparent); font-size: 10.5px; font-weight: 700; color: var(--lf-ink); }
+.pk-learn .pk-src::before { content: none; }
+.pk-src.is-guess::before { content: "注意"; background: #fde8d8; color: #9a4312; }
+.pk-learn .pk-src.is-guess::before { content: none; }
+.pk-learn .pk-src.is-guess { color: #9a4312; }
+.pk-karte th { width: 9.5em; padding: 8px 8px 8px 0; text-align: left; vertical-align: top; font-weight: 700; color: var(--lf-sub); }
+.pk-karte td { padding: 8px 0; vertical-align: top; }
+.pk-karte tr { border-top: 1px dashed color-mix(in srgb, var(--lf-ink) 15%, transparent); }
+.pk-karte tr.is-unknown td { color: var(--lf-sub); }
+.pk-unknown { display: inline-block; padding: 0 8px; border-radius: 6px; background: color-mix(in srgb, var(--lf-ink) 10%, transparent); color: var(--lf-ink); }
+.pk-reflect { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; border-left: 4px solid; }
+.pk-reflect.is-good { border-color: #2f9e5b; background: #eef8f1; color: #1d4d31; }
+.pk-reflect.is-care { border-color: #d77a33; background: #fdf1e7; color: #6b3410; }
+
+/* ---- 専門知識の手帳 ---- */
+.pk-kcard { display: grid; gap: 5px; padding: 10px 11px; border-radius: 12px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); transition: background 0.4s; }
+.pk-kcard.is-not { opacity: 0.6; }
+.pk-kcard.is-new { background: color-mix(in srgb, var(--pk-hi) 30%, var(--lf-card)); box-shadow: 0 0 0 2px var(--pk-hi); animation: pk-glow 1.6s ease-out 2.6s both; }
+.pk-kcard.is-shine { box-shadow: 0 0 0 2px var(--fit-good); background: #eaf7ef; }
+@keyframes pk-glow { 0% { box-shadow: 0 0 0 2px var(--pk-hi), 0 0 0 12px color-mix(in srgb, var(--pk-hi) 50%, transparent); } 100% { box-shadow: 0 0 0 2px var(--pk-hi); } }
+.pk-badge { padding: 0 7px; border-radius: 999px; background: var(--lf-accent); color: #fff; font-size: 10.5px; font-weight: 800; }
+.pk-badge.is-shine { background: var(--fit-good); }
+.pk-ladder { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.pk-ladder li { padding: 3px 0; border-radius: 5px; text-align: center; font-size: 10.5px; font-weight: 700; background: color-mix(in srgb, var(--lf-ink) 8%, transparent); color: var(--lf-sub); }
+.pk-ladder li.on { background: var(--lf-accent); color: #fff; }
+.pk-h .pk-ladder li.on { background: color-mix(in srgb, var(--lf-accent) 85%, #000); }
+.pk-fitline { font-size: 12px; font-weight: 700; color: var(--fc, var(--lf-ink)); }
+.pk-more { padding: 12px 14px; border-radius: var(--lf-radius); background: var(--lf-card); box-shadow: var(--lf-shadow); }
+.pk-g1 .pk-more, .pk-g1 .pk-book { border: var(--pk-border); }
+.pk-more .lf-card { box-shadow: none; border: 0; padding: 0; background: transparent; }
+
+/* ---- 見せ場：分かれ道で知識を配る ---- */
+.pk-deal { overflow: hidden; border-radius: var(--lf-radius); background: var(--lf-card); box-shadow: var(--lf-shadow); }
+.pk-g1 .pk-deal { border: var(--pk-border); }
+.pk-deal-head { position: relative; display: grid; align-content: end; min-height: 150px; padding: 16px 18px; color: #fff; }
+.pk-deal-head img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; z-index: 0; }
+.pk-deal-head::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 10%, rgba(0, 0, 0, 0.65)); z-index: 1; }
+.pk-deal-head > div { position: relative; z-index: 2; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+.pk-deal-head .pk-eyebrow { color: var(--pk-hi); }
+.pk-roads { display: grid; gap: 10px; padding: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.pk-road { display: grid; grid-template-rows: auto 1fr auto; gap: 8px; padding: 0 0 10px; overflow: hidden; text-align: left; border-radius: 14px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; animation: pk-deal 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.pk-road:hover { transform: translateY(-3px); border-color: var(--lf-accent); }
+@keyframes pk-deal { from { opacity: 0; transform: translateY(-40px) rotate(-6deg) scale(0.9); } }
+.pk-road-pic { position: relative; display: block; aspect-ratio: 16 / 7; overflow: hidden; background: var(--pk-table); }
+.pk-road-pic img { width: 100%; height: 100%; object-fit: cover; }
+.pk-h .pk-road-pic img { object-fit: contain; transform: scale(1.15); }
+.pk-road-name { position: absolute; left: 8px; bottom: 6px; padding: 2px 10px; border-radius: 999px; background: var(--lf-card); color: var(--lf-ink); font-size: 15px; }
+.pk-road-ks { display: grid; gap: 5px; padding: 0 10px; }
+.pk-road-ks li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; align-items: start; color: var(--fc); animation: pk-in 0.4s both; }
+.pk-road-ks b { display: block; font-size: 12.5px; color: var(--lf-ink); }
+.pk-road-ks small { display: block; font-size: 11px; line-height: 1.45; color: var(--lf-sub); }
+.pk-mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--fc); color: #fff; font-weight: 800; font-size: 13px; }
+.pk-road-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; padding: 0 10px; font-size: 11px; color: var(--lf-sub); }
+.pk-road-foot b { color: var(--lf-accent); font-size: 12.5px; }
+
+/* 人生を並べる：知識 × 道 */
+.pk-fittable { border-collapse: separate; border-spacing: 4px; min-width: 760px; }
+.pk-fittable th { padding: 4px 6px; text-align: left; font-size: 12.5px; white-space: nowrap; }
+.pk-fittable thead th.is-seen { color: var(--lf-accent); }
+.pk-fittable thead small { display: block; font-size: 10px; }
+.pk-fittable td { padding: 6px; border-radius: 8px; vertical-align: top; background: color-mix(in srgb, var(--fc) 10%, var(--lf-card)); }
+.pk-fittable td small { display: block; margin-top: 3px; font-size: 10.5px; line-height: 1.4; color: var(--lf-sub); }
+
+/* 年表の口コミ印・獲得の印 */
+.pk-node-pic { position: relative; }
+.pk-node-rev { position: absolute; right: -4px; top: -4px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #d77a33; color: #fff; font-size: 10px; font-weight: 800; border: 2px solid var(--lf-card); }
+.pk-node .pk-node-pic { overflow: visible; }
+.pk-node .pk-node-pic img { border-radius: 50%; }
+.pk-gainchips { position: absolute; left: 2.2%; top: 4%; z-index: 2; display: grid; gap: 4px; }
+.pk-gainchips li { padding: 3px 10px; border-radius: 999px; background: var(--pk-hi); color: #2e2420; font-weight: 800; font-size: clamp(10.5px, 1.8cqi, 13px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15); animation: pk-chip 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.pk-bubble em { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: #fdf1e7; color: #9a4312; font-style: normal; font-size: 0.95em; }
+.pk-bubble.is-review { border-color: #d77a33; }
+
+/* 獲得カットイン */
+.pk-kgain { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.pk-kcardbig { display: grid; gap: 2px; min-width: 150px; max-width: 46%; padding: 10px 14px; border-radius: 14px; background: #fff; color: #2b2622; text-align: left; box-shadow: 0 8px 0 var(--pk-band); animation: pk-flip 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.pk-kcardbig b { font-size: clamp(14px, 2.6cqi, 22px); }
+.pk-kcardbig small { font-size: clamp(10px, 1.6cqi, 12px); color: #6d5f55; }
+.pk-kcardbig.is-shine { box-shadow: 0 8px 0 var(--fit-good); }
+.pk-kstep { width: max-content; padding: 1px 8px; border-radius: 999px; background: var(--lf-accent); color: #fff; font-weight: 800; font-size: clamp(10.5px, 1.8cqi, 13px); }
+@keyframes pk-flip { from { transform: rotateY(90deg) translateY(20px); opacity: 0; } }
+
+/* ---- H：道の地図 ---- */
+.pk-mapwrap { overflow-x: auto; border-radius: var(--lf-radius); box-shadow: var(--lf-shadow); background: var(--pk-table); }
+.pk-map { position: relative; min-width: 820px; aspect-ratio: 16 / 8.6; overflow: hidden; }
+.pk-map-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.22; filter: saturate(0.7) blur(1px); }
+.pk-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pk-r { fill: none; stroke: color-mix(in srgb, var(--lf-ink) 22%, transparent); stroke-width: 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.pk-r.is-trunk { stroke: var(--lf-accent); stroke-width: 11; }
+.pk-r.is-chosen { stroke: var(--lf-accent); stroke-width: 11; }
+.pk-r.is-dim { stroke: color-mix(in srgb, var(--lf-ink) 10%, transparent); }
+.pk-r.is-seen:not(.is-chosen) { stroke: color-mix(in srgb, var(--lf-accent) 45%, transparent); stroke-dasharray: 2 0; }
+.pk-map.is-fork .pk-r:not(.is-trunk) { stroke: color-mix(in srgb, var(--lf-accent) 55%, transparent); stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: pk-draw 1.2s ease-out both; }
+@keyframes pk-draw { to { stroke-dashoffset: 0; } }
+.pk-map-legend { position: absolute; left: 1.5%; top: 3%; display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: 36%; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--lf-card) 92%, transparent); font-size: 11.5px; font-weight: 700; }
+.pk-map-age { position: absolute; transform: translate(-50%, -50%); padding: 1px 8px; border-radius: 999px; background: var(--lf-ink); color: var(--lf-card); font-size: 11px; font-weight: 700; }
+.pk-stop { position: absolute; display: grid; justify-items: center; gap: 2px; transform: translate(-50%, -50%); }
+.pk-stop-pic { display: block; width: 56px; height: 56px; overflow: hidden; border-radius: 50%; border: 3px solid var(--lf-card); box-shadow: 0 0 0 2px var(--lf-accent), 0 4px 8px rgba(0, 0, 0, 0.2); background: var(--pk-table); }
+.pk-stop-pic img { width: 100%; height: 100%; object-fit: cover; }
+.pk-stop.is-small .pk-stop-pic { width: 40px; height: 40px; }
+.pk-stop.is-fork .pk-stop-pic { border-radius: 14px; }
+.pk-stop:disabled { opacity: 0.55; }
+.pk-stop[aria-current="true"] .pk-stop-pic { box-shadow: 0 0 0 3px var(--pk-hi), 0 0 0 8px color-mix(in srgb, var(--pk-hi) 40%, transparent); }
+.pk-stop-label { position: absolute; top: 100%; margin-top: 3px; padding: 0 6px; border-radius: 6px; background: color-mix(in srgb, var(--lf-card) 92%, transparent); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.pk-stop .pk-node-rev { right: -2px; top: -2px; }
+.pk-dest { position: absolute; display: flex; align-items: center; gap: 6px; transform: translate(-28px, -50%); text-align: left; transition: opacity 0.3s, transform 0.2s; animation: pk-in 0.5s both; }
+.pk-dest.is-dim { opacity: 0.35; }
+.pk-dest.is-pick { cursor: pointer; }
+.pk-dest.is-pick:hover { transform: translate(-28px, -50%) scale(1.06); }
+.pk-dest-pic { display: block; flex: 0 0 auto; width: 52px; height: 52px; overflow: hidden; border-radius: 12px; border: 3px solid var(--lf-card); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2); background: var(--pk-table); }
+.pk-dest-pic img { width: 100%; height: 100%; object-fit: cover; }
+.pk-dest.is-chosen .pk-dest-pic { box-shadow: 0 0 0 3px var(--lf-accent); }
+.pk-dest-txt { display: grid; gap: 2px; padding: 3px 7px; border-radius: 8px; background: color-mix(in srgb, var(--lf-card) 94%, transparent); }
+.pk-dest-txt b { font-size: 13px; }
+.pk-dest-ks { display: flex; gap: 3px; }
+.pk-dest-ks i { padding: 0 3px; border-radius: 4px; background: var(--fc); color: #fff; font-style: normal; font-size: 10.5px; font-weight: 800; }
+.pk-walker { position: absolute; transform: translate(-50%, -112%); transition: left 1s cubic-bezier(0.5, 0, 0.3, 1), top 1s cubic-bezier(0.5, 0, 0.3, 1); pointer-events: none; z-index: 3; }
+.pk-walker img { height: 64px; width: auto; filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.3)); animation: pk-hop 0.9s ease-in-out infinite; }
+@keyframes pk-hop { 50% { translate: 0 -4px; } }
+.pk-map-call { position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); padding: 4px 14px; border-radius: 999px; background: var(--lf-accent); color: #fff; font-size: 14px; animation: pk-in 0.5s 1s both; }
+
+@media (max-width: 640px) {
+  .pk-hero { padding: 18px; }
+  .pk-urlbox { flex-direction: column; }
+  .pk-how li { grid-template-columns: 104px minmax(0, 1fr); }
+  .pk-gainchips { top: auto; bottom: 26%; }
+  .pk-kcardbig { max-width: 90%; }
+}
+
+.pk-rank.is-gain .pk-rank-me { left: 22%; height: 70%; }
+.pk-rank.is-gain .pk-rank-box { left: auto; right: 2%; top: 6%; width: 60%; transform: none; }
+.pk-h .pk-rank.is-gain .pk-rank-me { height: 52%; }
+@media (max-width: 640px) { .pk-rank.is-gain .pk-rank-box { width: 66%; } .pk-rank.is-gain .pk-rank-me { left: 18%; } }
+.pk-map-swipe { display: none; }
+@media (max-width: 640px) { .pk-map-swipe { display: block; position: sticky; left: 8px; bottom: 6px; position: absolute; left: 1.5%; bottom: 2%; padding: 2px 10px; border-radius: 999px; background: var(--lf-ink); color: var(--lf-card); font-size: 11px; } }

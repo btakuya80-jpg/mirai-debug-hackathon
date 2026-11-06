@@ -18,9 +18,11 @@ export type Vibe = {
   mood?: Mood;
   /** 何から読み取ったか */
   from: "口コミ" | "会社情報";
+  /** 読み取った元の文（貼った文・会社ページの1行） */
+  quote: string;
 };
 
-type Rule = Omit<Vibe, "from"> & { keys: string[] };
+type Rule = Omit<Vibe, "from" | "quote"> & { keys: string[] };
 
 export const RULES: Rule[] = [
   { id: "teach", keys: ["教え方が丁寧", "教え方がていねい", "丁寧に教", "ていねいに教", "面倒見", "研修が手厚", "研修制度"], label: "教え方がていねい", tone: "good", at: 0, talk: { who: "senpai", text: "分からない所、もう一回いっしょにやろう" }, event: "先輩が横について、手順をていねいに教えてくれる", tint: "warm" },
@@ -36,7 +38,12 @@ export const RULES: Rule[] = [
 export function readVibes(text: string, from: Vibe["from"]): Vibe[] {
   const t = text.replace(/\s/g, "");
   if (!t) return [];
-  return RULES.filter((r) => r.keys.some((k) => t.includes(k))).map(({ keys: _k, ...r }) => ({ ...r, from }));
+  const sentences = t.split(/(?<=[。！？!?\n])/).filter(Boolean);
+  return RULES.filter((r) => r.keys.some((k) => t.includes(k))).map(({ keys, ...r }) => {
+    const key = keys.find((k) => t.includes(k))!;
+    const quote = (sentences.find((x) => x.includes(key)) ?? key).replace(/[。！？!?]$/, "");
+    return { ...r, from, quote };
+  });
 }
 
 /* ---------- 見本の会社情報（架空） ---------- */

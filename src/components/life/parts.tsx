@@ -20,13 +20,14 @@ import {
   type Job,
   type Level,
   type LifeState,
+  type LStep,
 } from "@/lib/life";
 import { COMPANY_INFO, SAMPLE_REVIEWS } from "@/lib/reviews";
 
 export const LEVEL_N: Record<Level, number> = { 低: 1, 中: 2, 高: 3 };
 
 /* ---------- 1. 求人を選ぶ ---------- */
-export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeState; thumb: (j: Job) => ReactNode; cta?: string }) {
+export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make", showUrl = true, showExtras = true }: { s: LifeState; thumb: (j: Job) => ReactNode; cta?: string; next?: LStep; showUrl?: boolean; showExtras?: boolean }) {
   const [url, setUrl] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const load = (u: string) => {
@@ -40,6 +41,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
   };
   return (
     <div className="grid gap-6">
+      {showUrl && (
       <div className="lf-card grid gap-3 p-5" data-h="url">
         <p className="lf-h text-[17px]">求人URLを貼る</p>
         <div className="flex flex-wrap gap-2">
@@ -73,6 +75,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
         </p>
         {msg && <p className="text-[13px] font-bold text-[var(--lf-accent)]">{msg}</p>}
       </div>
+      )}
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-h="jobs">
         {JOBS.map((j) => {
           const on = s.jobId === j.id;
@@ -102,7 +105,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
           );
         })}
       </ul>
-      <CompanyExtras s={s} />
+      {showExtras && <CompanyExtras s={s} />}
       <div className="lf-card grid gap-2 p-5 text-[14px] leading-7">
         <p className="lf-h text-[16px]">
           {s.job.company}「{s.job.title}」
@@ -114,7 +117,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
           職場の人：{(["boss", "senpai", "peer"] as const).map((k) => `${s.job.people[k].role} ${s.job.people[k].name}（${s.job.people[k].trait}）`).join("　")}
         </p>
         <div className="mt-2">
-          <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go("make")}>
+          <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go(next)}>
             {cta}
           </button>
         </div>
@@ -124,11 +127,11 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
 }
 
 /* ---------- 1b. 会社情報のURLと口コミ（どちらも任意・チームの案） ---------- */
-export function CompanyExtras({ s }: { s: LifeState }) {
+export function CompanyExtras({ s, stack }: { s: LifeState; stack?: boolean }) {
   const sample = COMPANY_INFO[s.job.id];
   const ci = s.companyInfo;
   return (
-    <div className="lf-card grid gap-5 p-5 lg:grid-cols-2" data-h="extras">
+    <div className={`lf-card grid gap-5 p-5 ${stack ? "" : "lg:grid-cols-2"}`} data-h="extras">
       <div className="grid content-start gap-2" data-h="company">
         <p className="lf-h text-[16px]">
           会社情報のURL <span className="text-[12px] font-normal text-[var(--lf-sub)]">（任意）</span>

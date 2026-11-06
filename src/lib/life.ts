@@ -597,8 +597,10 @@ function showScene() {
 
 /* ---------- 画面の流れ ---------- */
 export const LSTEPS = ["jobs", "make", "life", "saves"] as const;
-export type LStep = (typeof LSTEPS)[number];
-export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", make: "分身をつくる", life: "生涯を進める", saves: "人生を並べる" };
+/** G・H案（Higgsfield版）は、求人のあとに「会社のまとめ」をはさむ */
+export const PSTEPS = ["jobs", "karte", "make", "life", "saves"] as const;
+export type LStep = (typeof PSTEPS)[number];
+export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", karte: "会社のまとめ", make: "分身をつくる", life: "生涯を進める", saves: "人生を並べる" };
 
 export type Save = { branch: BranchId; reached: number };
 
@@ -620,7 +622,7 @@ export function useLife() {
   useEffect(() => {
     const read = () => {
       const h = window.location.hash.replace("#", "").replace(/^demo-/, "") as LStep;
-      if ((LSTEPS as readonly string[]).includes(h)) setStep(h);
+      if ((PSTEPS as readonly string[]).includes(h)) setStep(h);
     };
     read();
     window.addEventListener("hashchange", read);
