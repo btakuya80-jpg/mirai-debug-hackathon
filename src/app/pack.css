@@ -653,3 +653,84 @@
 .pk-epstage.is-down .pk-tint { opacity: 0.35; }
 .pk-epstage .pk-after { width: min(72%, 560px); font-size: clamp(13px, 2.7cqi, 21px); padding: 10px 16px 10px 10px; }
 .pk-epstage .pk-after img { width: clamp(44px, 9cqi, 72px); }
+
+/* ---------- 11/6 夕：自動で次へ・スキルと道のつながり・分かれ道の演出・残ると比べる ---------- */
+.pk-autonext { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 12px 14px 14px; overflow: hidden; border-radius: 14px; background: color-mix(in srgb, var(--lf-accent) 10%, var(--lf-card)); border: 2px solid color-mix(in srgb, var(--lf-accent) 45%, transparent); }
+.pk-autonext-bar { position: absolute; left: 0; bottom: 0; height: 5px; width: 100%; background: var(--lf-accent); transform-origin: left; animation: pk-autobar linear forwards; }
+@keyframes pk-autobar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.pk-autonext-txt { display: grid; gap: 1px; min-width: 0; }
+.pk-autonext-txt small { font-size: 11.5px; font-weight: 700; color: var(--lf-accent); }
+.pk-autonext-txt b { font-size: 14.5px; line-height: 1.5; }
+.pk-autonext-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.pk-skroads { border: 2px solid color-mix(in srgb, var(--lf-accent) 35%, transparent); animation: pk-pop 0.5s ease-out both; }
+@keyframes pk-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.pk-skr { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr) minmax(0, 36%); margin-top: 10px; }
+.pk-skr-left, .pk-skr-right { display: grid; margin: 0; padding: 0; list-style: none; }
+.pk-skr-left li, .pk-skr-right li { display: flex; align-items: center; }
+.pk-skr-left li > span, .pk-skr-right li > span { display: grid; gap: 0; width: 100%; padding: 4px 8px; border-radius: 10px; background: color-mix(in srgb, var(--lf-ink) 5%, var(--lf-card)); line-height: 1.3; }
+.pk-skr-left li b, .pk-skr-right li b { font-size: 13px; }
+.pk-skr-left li small, .pk-skr-right li small { font-size: 11px; color: var(--lf-sub); }
+.pk-skr-left li.is-new > span { background: color-mix(in srgb, var(--lf-accent) 16%, var(--lf-card)); box-shadow: 0 0 0 2px var(--lf-accent); }
+.pk-skr-left li em { justify-self: start; padding: 0 5px; border-radius: 4px; font-size: 10px; font-style: normal; font-weight: 800; color: #fff; background: var(--lf-accent); }
+.pk-skr-right li.is-good > span { background: color-mix(in srgb, var(--fit-good, #2e8b57) 16%, var(--lf-card)); box-shadow: 0 0 0 2px var(--fit-good, #2e8b57); }
+.pk-skr-right li.is-good small { color: var(--fit-good, #2e8b57); font-weight: 700; }
+.pk-skr-right li.is-some > span { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--fit-good, #2e8b57) 45%, transparent); }
+.pk-skr-lines { width: 100%; height: 100%; overflow: visible; }
+.pk-skr-lines path { fill: none; stroke-linecap: round; }
+.pk-skr-lines path.is-old { stroke: color-mix(in srgb, var(--lf-ink) 16%, transparent); stroke-width: 1.5; }
+.pk-skr-lines path.is-new { stroke: var(--lf-accent); stroke-width: 3; stroke-dasharray: 400; animation: pk-draw 1.4s ease-out both; }
+.pk-skr-lines path.is-some { stroke-dasharray: 4 4; animation: none; }
+.pk-skr-lines path.is-new.is-some { stroke-width: 2; }
+@keyframes pk-draw { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+.pk-skr-key { display: inline-block; width: 22px; height: 0; margin: 0 4px 3px 0; vertical-align: middle; border-top: 3px solid var(--lf-accent); }
+.pk-skr-key.is-some { border-top: 2px dashed var(--lf-accent); }
+
+.pk-stagebox { position: relative; }
+.pk-stagebox.is-fork { border-radius: 18px; box-shadow: 0 0 0 4px #e8a33a, 0 0 0 10px color-mix(in srgb, #e8a33a 25%, transparent); animation: pk-forkglow 1.6s ease-in-out infinite; }
+@keyframes pk-forkglow { 50% { box-shadow: 0 0 0 4px #e8a33a, 0 0 0 16px color-mix(in srgb, #e8a33a 10%, transparent); } }
+.pk-forkflag { position: absolute; left: 50%; top: 12px; z-index: 6; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; white-space: nowrap; font-weight: 800; font-size: 15px; color: #3a2400; background: #ffd27a; box-shadow: 0 6px 18px rgb(0 0 0 / 0.2); animation: pk-bob 1.2s ease-in-out infinite; }
+@keyframes pk-bob { 50% { transform: translate(-50%, -4px); } }
+.pk-forkcall { display: grid; gap: 8px; justify-items: start; padding: 22px 22px 24px; border-radius: 18px; color: #3a2400; background: linear-gradient(135deg, #ffe3a3, #ffc56b); border: 3px solid #e8a33a; scroll-margin-top: 80px; animation: pk-pop 0.5s ease-out both; }
+.pk-forkcall-eyebrow { font-size: 13px; font-weight: 800; letter-spacing: 0.08em; }
+.pk-forkcall-title { font-size: 28px; line-height: 1.3; }
+.pk-forkcall-sub { font-size: 14px; line-height: 1.8; }
+.pk-forkcall-btn { padding: 14px 26px; font-size: 17px; animation: pk-bob2 1.2s ease-in-out infinite; }
+@keyframes pk-bob2 { 50% { transform: translateY(-3px); } }
+.pk-deal { scroll-margin-top: 80px; }
+.pk-deal.is-choose .pk-road { border-color: color-mix(in srgb, #e8a33a 70%, transparent); }
+.pk-deal.is-choose .pk-road-foot b { display: inline-block; padding: 6px 12px; border-radius: 999px; color: #3a2400; background: #ffd27a; }
+.pk-deal.is-choose .pk-road:hover { border-color: #e8a33a; transform: translateY(-3px); }
+
+.pk-staycol { padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); }
+.pk-staycol.is-pick { box-shadow: 0 0 0 2px var(--lf-accent); }
+
+.pk-feel-face.is-letter { display: grid; place-items: center; background: color-mix(in srgb, var(--lf-accent) 18%, var(--lf-card)); }
+.pk-feel-face.is-letter b { font-size: 18px; color: var(--lf-accent); }
+
+.pk-node.is-life .pk-node-pic { border-radius: 10px; box-shadow: 0 0 0 2px #e07a9a; }
+.pk-node.is-life.is-set .pk-node-pic { box-shadow: 0 0 0 3px #e07a9a, 0 0 0 6px color-mix(in srgb, #e07a9a 25%, transparent); }
+.pk-node.is-life .pk-node-pic img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; opacity: 0.85; }
+.pk-node-sq { position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; font-size: 11px; color: #fff; background: #e07a9a; }
+.pk-node.is-life .pk-node-sub { color: #b4446a; font-weight: 700; }
+.pk-ruler-sq { position: absolute; top: -3px; transform: translateX(-50%); font-size: 13px; line-height: 1; color: #e07a9a; opacity: 0.6; }
+.pk-ruler-sq.is-set { opacity: 1; }
+
+.pk-mockjob { display: grid; gap: 4px; padding: 14px; border-radius: 12px; border: 1.5px dashed color-mix(in srgb, var(--lf-ink) 30%, transparent); background: var(--lf-card); }
+.pk-mockjob small { font-size: 11px; color: var(--lf-sub); }
+.pk-mockjob span { font-size: 12.5px; }
+.pk-mockjob-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.pk-mockjob-btns i { padding: 5px 10px; border-radius: 8px; font-style: normal; font-size: 12.5px; font-weight: 700; background: color-mix(in srgb, var(--lf-ink) 8%, transparent); }
+.pk-mockjob-btns i.is-mirai { color: #fff; background: var(--lf-accent); }
+@media (max-width: 640px) {
+  .pk-skr { grid-template-columns: minmax(0, 42%) minmax(0, 1fr) minmax(0, 40%); }
+  .pk-forkcall-title { font-size: 22px; }
+  .pk-forkflag { font-size: 12.5px; padding: 6px 12px; }
+}
+.pk-skr { align-items: start; }
+.pk-skr-left, .pk-skr-right { display: block; }
+.pk-skr-left li, .pk-skr-right li { box-sizing: border-box; margin: 0; padding: 2px 0; }
+.pk-skr-right li > span { padding: 3px 8px; }
+.pk-speed.is-light { border-color: color-mix(in srgb, var(--lf-ink) 25%, transparent); }
+.pk-speed.is-light button { color: var(--lf-ink); }
+.pk-speed.is-light button[aria-pressed="true"] { background: var(--lf-ink); color: var(--lf-card); }
