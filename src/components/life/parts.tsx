@@ -21,6 +21,7 @@ import {
   type Level,
   type LifeState,
 } from "@/lib/life";
+import { COMPANY_INFO, SAMPLE_REVIEWS } from "@/lib/reviews";
 
 export const LEVEL_N: Record<Level, number> = { 低: 1, 中: 2, 高: 3 };
 
@@ -101,6 +102,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
           );
         })}
       </ul>
+      <CompanyExtras s={s} />
       <div className="lf-card grid gap-2 p-5 text-[14px] leading-7">
         <p className="lf-h text-[16px]">
           {s.job.company}「{s.job.title}」
@@ -115,6 +117,69 @@ export function JobBoard({ s, thumb, cta = "この求人で試す" }: { s: LifeS
           <button type="button" className="lf-btn px-6 py-3 text-[15px]" onClick={() => s.go("make")}>
             {cta}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 1b. 会社情報のURLと口コミ（どちらも任意・チームの案） ---------- */
+export function CompanyExtras({ s }: { s: LifeState }) {
+  const sample = COMPANY_INFO[s.job.id];
+  const ci = s.companyInfo;
+  return (
+    <div className="lf-card grid gap-5 p-5 lg:grid-cols-2" data-h="extras">
+      <div className="grid content-start gap-2" data-h="company">
+        <p className="lf-h text-[16px]">
+          会社情報のURL <span className="text-[12px] font-normal text-[var(--lf-sub)]">（任意）</span>
+        </p>
+        <input value={s.companyUrl} onChange={(e) => s.setCompanyUrl(e.target.value)} placeholder="https://kaisha.example/…" className="lf-input px-3 py-2.5 text-[14px]" inputMode="url" aria-label="会社情報のURL" />
+        <p className="text-[12.5px] text-[var(--lf-sub)]">
+          見本：
+          <button type="button" className="underline underline-offset-2" onClick={() => s.setCompanyUrl(sample.url)}>
+            {sample.url.replace("https://", "")}
+          </button>
+        </p>
+        {ci ? (
+          <div className="lf-note grid gap-1 p-3 text-[13px] leading-6">
+            <p className="font-bold">
+              {ci.founded}創業／{ci.staff}／{ci.avgAge}
+            </p>
+            {ci.points.map((p) => (
+              <p key={p}>・{p}</p>
+            ))}
+          </div>
+        ) : (
+          s.companyUrl.trim() !== "" && <p className="text-[12.5px] font-bold text-[var(--lf-accent)]">見本では、kaisha.example の5社だけ読み込めます。</p>
+        )}
+      </div>
+      <div className="grid content-start gap-2" data-h="reviews">
+        <p className="lf-h text-[16px]">
+          自分で読んだ口コミを貼る <span className="text-[12px] font-normal text-[var(--lf-sub)]">（任意）</span>
+        </p>
+        <textarea
+          value={s.reviewText}
+          onChange={(e) => s.setReviewText(e.target.value)}
+          rows={3}
+          placeholder="例）教え方が丁寧。ただ繁忙期は残業が多い。"
+          className="lf-input px-3 py-2.5 text-[14px] leading-6"
+          aria-label="口コミの文章"
+        />
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-[var(--lf-sub)]">
+          <button type="button" className="underline underline-offset-2" onClick={() => s.setReviewText(SAMPLE_REVIEWS[s.job.id])}>
+            見本の口コミ（架空）を入れる
+          </button>
+          <span>口コミサイトを自動で読むことはしません。</span>
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5" aria-live="polite">
+          <span className="text-[12.5px] font-bold">場面に出る職場の空気：</span>
+          {s.vibes.length === 0 && <span className="text-[12.5px] text-[var(--lf-sub)]">まだありません</span>}
+          {s.vibes.map((v) => (
+            <span key={v.id} className={`lf-vibe is-${v.tone} px-2 py-0.5 text-[12px]`}>
+              {v.label}
+              <span className="ml-1 opacity-70">（{v.from}）</span>
+            </span>
+          ))}
         </div>
       </div>
     </div>

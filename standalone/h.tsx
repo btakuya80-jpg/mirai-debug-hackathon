@@ -1,3 +1,3 @@
-import App from "../src/app/h/DioramaApp";
+import PackApp from "../src/components/pack/PackApp";
 import { mount } from "./mount";
-mount(App);
+mount(() => <PackApp style="h1" />);

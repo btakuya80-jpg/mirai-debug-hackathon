@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import App from "./DioramaApp";
+import PackApp from "@/components/pack/PackApp";
 import "../life.css";
-import "./h.css";
+import "../pack.css";
 
-export const metadata: Metadata = { title: "H案 ジオラマ — 未来デバッグ" };
+export const metadata: Metadata = { title: "H-1 — 未来デバッグ" };
 
 export default function Page() {
-  return <App />;
+  return <PackApp style="h1" />;
 }

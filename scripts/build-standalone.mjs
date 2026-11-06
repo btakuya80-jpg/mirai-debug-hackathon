@@ -9,7 +9,7 @@
 //     入口から3案へは相対リンク（a.html など）、各案から入口へは ./ で戻る。
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -46,18 +46,23 @@ const PAGES = [
   { id: "d", title: "未来デバッグ D案", bg: "#f7f8f5", scheme: "light" },
   { id: "e", title: "未来デバッグ E案", bg: "#f4f6f8", scheme: "light" },
   { id: "f", title: "未来デバッグ F案", bg: "#e5e8eb", scheme: "light" },
-  { id: "g", title: "未来デバッグ G案", bg: "#f3ebdc", scheme: "light" },
-  { id: "h", title: "未来デバッグ H案", bg: "#eaf4ef", scheme: "light" },
+  { id: "g", title: "未来デバッグ G-1", bg: "#fbf4e6", scheme: "light", pack: "g1" },
+  { id: "g2", title: "未来デバッグ G-2", bg: "#f1e5cf", scheme: "light", pack: "g2" },
+  { id: "h", title: "未来デバッグ H-1", bg: "#f7efe3", scheme: "light", pack: "h1" },
+  { id: "h2", title: "未来デバッグ H-2", bg: "#e9cfa7", scheme: "light", pack: "h2" },
   { id: "i", title: "未来デバッグ I案", bg: "#f6efe2", scheme: "light" },
   { id: "j", title: "未来デバッグ J案", bg: "#0e0d0c", scheme: "dark" },
 ];
 
 const linksFile = resolve(root, "standalone/links.json");
 const links = ONE
-  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/h": "h.html", "/i": "i.html", "/j": "j.html" }
+  ? { "/": "./", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/g2": "g2.html", "/h": "h.html", "/h2": "h2.html", "/i": "i.html", "/j": "j.html" }
   : existsSync(linksFile)
   ? JSON.parse(readFileSync(linksFile, "utf8"))
-  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/h": "h.html", "/i": "i.html", "/j": "j.html" };
+  : { "/": "home.html", "/a": "a.html", "/b": "b.html", "/c": "c.html", "/d": "d.html", "/e": "e.html", "/f": "f.html", "/g": "g.html", "/g2": "g2.html", "/h": "h.html", "/h2": "h2.html", "/i": "i.html", "/j": "j.html" };
+
+// G・H案の絵（public/packs）を書き出し先にも置く。Artifact では files で一緒に公開する
+cpSync(resolve(root, "public/packs"), resolve(out, "packs"), { recursive: true });
 
 const ONLY_IDS = process.env.ONLY ? process.env.ONLY.split(",") : null;
 for (const p of PAGES.filter((x) => !ONLY_IDS || ONLY_IDS.includes(x.id))) {
@@ -103,7 +108,7 @@ ${css}
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/${REACT}/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/${REACT}/umd/react-dom.production.min.js"></script>
-<script>window.__MIRAI_LINKS=${JSON.stringify(links)};</script>
+<script>window.__MIRAI_LINKS=${JSON.stringify(links)};window.__MIRAI_PACK_BASE="./packs";</script>
 <script>${code}</script>
 `;
   const cut = body.indexOf('<div id="root">');

@@ -1,4 +1,5 @@
 @import "../src/app/globals.css";
-@import "../src/app/g/g.css";
+@import "../src/app/life.css";
+@import "../src/app/pack.css";
 @source "../src";
 @source "./";

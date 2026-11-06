@@ -45,6 +45,10 @@
 .lf-tick[aria-current="true"] { background: var(--lf-ink); color: var(--lf-card); border-color: var(--lf-ink); }
 .lf-tick:disabled { opacity: 0.35; }
 .lf-rewind { border-radius: 999px; border: 2px dashed var(--lf-accent); color: var(--lf-accent); font-weight: 700; background: transparent; }
+.lf-note { border-radius: calc(var(--lf-radius) * 0.6); background: color-mix(in srgb, var(--lf-accent) 8%, var(--lf-card)); }
+.lf-vibe { border-radius: 999px; font-weight: 700; }
+.lf-vibe.is-good { background: #dff3e6; color: #1f6b3d; }
+.lf-vibe.is-care { background: #fde8d8; color: #9a4312; }
 .lf-save.is-dim { opacity: 0.62; }
 .lf-scroll { scrollbar-width: thin; }
 .lf-stepnav button { border-radius: 999px; }

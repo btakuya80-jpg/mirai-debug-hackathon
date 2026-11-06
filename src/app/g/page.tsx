@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import GrowApp from "./GrowApp";
-import "./g.css";
+import PackApp from "@/components/pack/PackApp";
+import "../life.css";
+import "../pack.css";
 
-export const metadata: Metadata = { title: "G案 働く姿が見える育成シミュレーション風 — 未来デバッグ" };
+export const metadata: Metadata = { title: "G-1 — 未来デバッグ" };
 
 export default function Page() {
-  return <GrowApp />;
+  return <PackApp style="g1" />;
 }

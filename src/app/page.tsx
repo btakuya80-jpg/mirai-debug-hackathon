@@ -126,7 +126,7 @@ export default function Home() {
   return (
     <main className="min-h-dvh bg-[#f2f4f7] text-[#1b2330]">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
-        <p className="text-[14px] font-medium text-[#56627a]">Built with Claude: Japan 2026 提出作品　デザイン案の比較用モック（A〜J）</p>
+        <p className="text-[14px] font-medium text-[#56627a]">Built with Claude: Japan 2026 提出作品　デザイン案の比較用モック</p>
         <h1 className="mt-3 text-[40px] leading-tight font-bold tracking-tight sm:text-[64px]">
           <span className="w">未来デバッグ</span>
         </h1>

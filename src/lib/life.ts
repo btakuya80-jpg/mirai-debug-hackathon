@@ -3,8 +3,9 @@
 /* H・I・J案（作り直し）で共通に使う、生涯の筋書きデータと画面の流れ。
    いまはAIにつながず、ここに書いた見本の筋書きで動く。会社・人物はすべて架空。 */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isDemoMode } from "./mirai";
+import { companyByUrl, readVibes, type Vibe } from "./reviews";
 
 export const ABILITIES = ["段取り", "対人", "専門スキル", "AI活用", "企画", "指導", "体力・継続", "自分で決める力"] as const;
 export const GRADES = ["G", "F", "E", "D", "C", "B", "A", "S"] as const;
@@ -48,6 +49,8 @@ export type Chapter = {
   life: Life;
   mood: Mood;
   fork?: boolean;
+  /** 口コミ・会社情報から読み取った職場の空気（チームの案） */
+  vibes?: Vibe[];
 };
 
 export type BranchId = "stay" | "same" | "other" | "indep" | "relearn" | "abroad";
@@ -610,6 +613,9 @@ export function useLife() {
   const [branch, setBranch] = useState<BranchId | null>(null);
   const [idx, setIdx] = useState(0);
   const [saves, setSaves] = useState<BranchId[]>([]);
+  /** 会社情報のURL（任意）と、本人が読んで貼った口コミの文章（任意） */
+  const [companyUrl, setCompanyUrl] = useState("");
+  const [reviewText, setReviewText] = useState("");
 
   useEffect(() => {
     const read = () => {
@@ -635,9 +641,31 @@ export function useLife() {
   }, []);
 
   const job = getJob(jobId);
-  const forkIdx = job.trunk.length - 1;
+  const company = companyByUrl(companyUrl);
+  const companyInfo = company?.[1];
+  const vibes = useMemo(() => {
+    const fromReview = readVibes(reviewText, "口コミ");
+    const fromCompany = companyInfo ? readVibes(companyInfo.points.join("。"), "会社情報") : [];
+    return [...fromReview, ...fromCompany.filter((v) => !fromReview.some((r) => r.id === v.id))];
+  }, [reviewText, companyInfo]);
+  const trunk = useMemo(
+    () =>
+      job.trunk.map((c, i) => {
+        const vs = vibes.filter((v) => v.at === i);
+        if (!vs.length) return c;
+        return {
+          ...c,
+          vibes: vs,
+          talks: [...c.talks, ...vs.map((v) => v.talk)],
+          events: [...c.events, ...vs.map((v) => `${v.from}より：${v.event}`)],
+          mood: vs.find((v) => v.mood)?.mood ?? c.mood,
+        };
+      }),
+    [job, vibes],
+  );
+  const forkIdx = trunk.length - 1;
   const detail = branch ? job.detailed?.[branch] : undefined;
-  const chapters: Chapter[] = detail ? [...job.trunk, ...detail.chapters] : job.trunk;
+  const chapters: Chapter[] = detail ? [...trunk, ...detail.chapters] : trunk;
   const chapter = chapters[Math.min(idx, chapters.length - 1)];
   const prev = idx > 0 ? chapters[idx - 1] : undefined;
   const atFork = idx === forkIdx && !branch;
@@ -650,6 +678,10 @@ export function useLife() {
     setBranch(null);
     setIdx(0);
     setSaves([]);
+    if (id !== jobId) {
+      setCompanyUrl("");
+      setReviewText("");
+    }
   };
   const toggle = (qid: string, opt: string) =>
     setProfile((p) => {
@@ -686,7 +718,7 @@ export function useLife() {
     setIdx(0);
   };
 
-  return { step, go, job, jobId, pickJob, profile, setProfile, toggle, branch, choose, rewind, jump, next, restart, idx, chapters, chapter, prev, forkIdx, atFork, atEnd, detail, saves };
+  return { step, go, job, jobId, pickJob, companyUrl, setCompanyUrl, companyInfo, reviewText, setReviewText, vibes, profile, setProfile, toggle, branch, choose, rewind, jump, next, restart, idx, chapters, chapter, prev, forkIdx, atFork, atEnd, detail, saves };
 }
 export type LifeState = ReturnType<typeof useLife>;
 
