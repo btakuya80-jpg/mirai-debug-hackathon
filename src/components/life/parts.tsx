@@ -190,29 +190,51 @@ export function CompanyExtras({ s, stack }: { s: LifeState; stack?: boolean }) {
 }
 
 /* ---------- 2. 分身をつくる ---------- */
-export function MakeForm({ s, avatar, cta = "この分身で生涯を始める" }: { s: LifeState; avatar: ReactNode; cta?: string }) {
+export function MakeForm({ s, avatar, cta = "この条件で試運転を始める" }: { s: LifeState; avatar: ReactNode; cta?: string }) {
   const p = s.profile;
+  /* 職種は求人から決まる。同じ会社に募集が複数ある時だけ、その会社の募集の中から選ぶ */
+  const openings = JOBS.filter((j) => j.company === s.job.company);
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
       <div className="lf-card grid content-start justify-items-center gap-3 p-5 text-center">
         {avatar}
-        <p className="lf-h text-[18px]">{p.age}歳の分身</p>
+        <p className="lf-h text-[18px]">{p.age}歳のあなた</p>
         <p className="text-[13px] leading-6 text-[var(--lf-sub)]">
-          {p.kind}／{p.terms}／{p.style}
+          {s.job.title}／{p.terms}／{p.style}
           <br />
           {p.prefs.join("・") || "こだわりなし"}
         </p>
       </div>
       <div className="grid gap-4" data-h="profile">
+        <div className="lf-card p-5" data-h="jobkind">
+          <p className="lf-h text-[16px]">職種（求人から読み取り）</p>
+          <p className="mt-2 text-[15px] font-bold">
+            {s.job.company}　{s.job.title}
+          </p>
+          <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">
+            出典：求人原稿のタイトル・1段落目（{s.job.url.replace("https://", "")}）。職種は貼った求人で決まるので、ここでは選びません。
+          </p>
+          {openings.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="この会社の募集">
+              <span className="w-full text-[13px] font-bold">この会社の募集（{openings.length}件）から選ぶ</span>
+              {openings.map((j) => (
+                <button key={j.id} type="button" aria-pressed={j.id === s.job.id} onClick={() => s.pickJob(j.id)} className="lf-chip px-3.5 py-1.5 text-[14px]">
+                  {j.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="text-[13px] text-[var(--lf-sub)]">ここから下は、あなた自身のことだけを入れます。</p>
         <div className="lf-card p-5">
           <label className="flex flex-wrap items-center gap-4">
             <span className="lf-h text-[16px]">年齢</span>
             <input type="range" min={18} max={60} value={p.age} onChange={(e) => s.setProfile({ ...p, age: Number(e.target.value) })} className="lf-range min-w-[160px] flex-1" aria-label="年齢" />
             <span className="lf-num text-[26px]">{p.age}</span>
-            <span className="text-[13px]">歳から75歳まで</span>
+            <span className="text-[13px]">歳から</span>
           </label>
         </div>
-        {PROFILE_Q.map((q) => (
+        {PROFILE_Q.filter((q) => q.id !== "kind").map((q) => (
           <fieldset key={q.id} className="lf-card p-5">
             <legend className="sr-only">{q.text}</legend>
             <p className="lf-h text-[16px]">{q.text}</p>

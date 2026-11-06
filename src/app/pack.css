@@ -498,3 +498,101 @@
 .pk-epstage .pk-after img { width: clamp(36px, 7cqi, 56px); }
 .pk-learnstamp { left: 2.2%; right: auto; top: 15%; transform: rotate(-4deg); }
 @media (max-width: 640px) { .pk-epstage .pk-after { width: 72%; } .pk-epstage .pk-bubble { top: 16%; } }
+
+/* ---- 2026-11-06 第2弾：ゆっくり・時間の合図・向き・給料・成長のまとめ ---- */
+.pk-mean { margin-top: 2px; font-size: 14px; line-height: 1.65; }
+.pk-mean b { margin-right: 8px; padding: 1px 8px; border-radius: 6px; background: var(--lf-ink); color: var(--lf-card); font-size: 11.5px; }
+.pk-lvchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pk-lvchips li { padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--lf-ink) 6%, var(--lf-card)); font-size: 12.5px; transition: background 0.4s, transform 0.4s; }
+.pk-lvchips li.is-zero { color: var(--lf-sub); }
+.pk-lvchips li.is-target { box-shadow: inset 0 0 0 2px var(--pk-hi); }
+.pk-lvchips li.is-up { background: var(--pk-hi); transform: scale(1.06); }
+.pk-lvchips b { margin-left: 2px; }
+
+/* 吹き出しは話す人の頭の上に置き、しっぽを話す人へ向ける */
+.pk-bubble.is-anchored { top: auto; bottom: 69%; animation-name: pk-bub2; }
+.pk-h .pk-bubble.is-anchored { top: auto; bottom: 57%; }
+.pk-bubble.is-anchored::after { left: calc(50% + var(--tail, 0cqi)); }
+@keyframes pk-bub2 { from { opacity: 0; transform: translateX(-50%) scale(0.6) translateY(10px); } }
+@media (max-width: 640px) { .pk-epstage .pk-bubble.is-anchored, .pk-bubble.is-anchored { max-width: 62%; font-size: 11px; } }
+/* 話す人は相手の方へ体を向け、聞く人も話す人の方を向く */
+.pk-chara.turn-r { transform: translateX(-50%) perspective(700px) rotateY(24deg); transition: transform 0.5s; }
+.pk-chara.turn-l { transform: translateX(-50%) perspective(700px) rotateY(-24deg); transition: transform 0.5s; }
+.pk-chara.is-listen.turn-r { transform: translateX(-50%) perspective(700px) rotateY(14deg); }
+.pk-chara.is-listen.turn-l { transform: translateX(-50%) perspective(700px) rotateY(-14deg); }
+.pk-chara.is-speak { filter: drop-shadow(0 0 0.5px #fff) drop-shadow(0 5px 3px rgba(0, 0, 0, 0.22)) brightness(1.04); }
+
+/* 時間が進む合図 */
+.pk-timeskip { position: absolute; inset: 0; z-index: 12; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 6%; background: color-mix(in srgb, var(--lf-ink) 78%, transparent); color: #fff; text-align: center; cursor: pointer; backdrop-filter: blur(3px); animation: pk-in 0.5s both; }
+.pk-ts-label { padding: 3px 14px; border-radius: 999px; background: var(--pk-hi); color: #2e2420; font-weight: 800; font-size: clamp(11px, 2cqi, 15px); letter-spacing: 0.06em; }
+.pk-ts-when { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; font-weight: 900; font-size: clamp(20px, 5.4cqi, 46px); line-height: 1.2; }
+.pk-ts-when s { text-decoration: none; opacity: 0.55; font-size: 0.62em; }
+.pk-ts-when i { font-style: normal; color: var(--pk-hi); animation: pk-tsarrow 1s ease-in-out infinite; }
+.pk-ts-when b { animation: pk-stamp 0.7s 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes pk-tsarrow { 50% { transform: translateX(6px); } }
+.pk-ts-mean { max-width: 40em; font-size: clamp(12px, 2.3cqi, 17px); line-height: 1.6; font-weight: 700; animation: pk-in 0.6s 1s both; }
+.pk-ts-bar { width: min(60%, 360px); height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); overflow: hidden; position: relative; }
+.pk-ts-bar::after { content: ""; position: absolute; inset: 0; background: var(--pk-hi); transform-origin: 0 50%; animation: pk-tsfill 3.4s linear both; }
+@keyframes pk-tsfill { from { transform: scaleX(0); } }
+
+/* 字幕の操作（速さ・次へ） */
+.pk-cap-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.pk-speed { display: inline-flex; border-radius: 999px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--lf-card) 45%, transparent); }
+.pk-speed button { padding: 3px 10px; font-size: 12px; color: var(--lf-card); }
+.pk-speed button[aria-pressed="true"] { background: var(--lf-card); color: var(--lf-ink); font-weight: 800; }
+.pk-cap-next { padding: 5px 16px; border-radius: 999px; background: var(--pk-hi); color: #2e2420; font-weight: 800; font-size: 14px; }
+.pk-cap-pause { display: none; }
+@media (max-width: 640px) { .pk-cap-ctl { width: 100%; justify-content: space-between; } }
+
+/* 給料 */
+.pay-上がりやすい { color: #1f7a45; }
+.pay-横ばい { color: #6d5f55; }
+.pay-下がることもある { color: #b4471f; }
+.pay-大きく変わる { color: #6b46a8; }
+.pk-payline { font-size: 13.5px; line-height: 1.7; }
+.pk-payline small { display: block; color: var(--lf-sub); font-size: 11.5px; }
+.pk-road-pay { display: grid; gap: 1px; margin: 0 10px; padding: 5px 8px; border-radius: 8px; background: color-mix(in srgb, var(--lf-ink) 5%, var(--lf-card)); font-size: 12px; font-weight: 800; }
+.pk-road-pay small { font-weight: 500; font-size: 10.5px; color: var(--lf-sub); line-height: 1.4; }
+
+/* 成長のまとめ */
+.pk-growth { box-shadow: 0 0 0 3px var(--pk-hi), var(--lf-shadow); animation: pk-in 0.6s both; }
+.pk-ba { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; margin-top: 12px; }
+.pk-ba figure { display: grid; gap: 6px; }
+.pk-ba-pic { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 14px; background: var(--pk-table); }
+.pk-ba-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.5) brightness(1.05); opacity: 0.55; }
+.pk-ba-me { position: absolute; left: 50%; bottom: 2%; height: 92%; width: auto; transform: translateX(-50%); filter: drop-shadow(0 5px 3px rgba(0, 0, 0, 0.25)); }
+.pk-ba figure:not(.is-after) .pk-ba-me { filter: grayscale(0.3) drop-shadow(0 5px 3px rgba(0, 0, 0, 0.2)); transform: translateX(-50%) scale(0.9); transform-origin: 50% 100%; }
+.pk-ba .is-after .pk-ba-pic { box-shadow: 0 0 0 3px var(--pk-hi); }
+.pk-ba .is-after .pk-ba-bg { filter: none; opacity: 0.85; }
+.pk-ba figcaption { display: grid; text-align: center; }
+.pk-ba figcaption small { font-size: 11.5px; color: var(--lf-sub); font-weight: 700; }
+.pk-ba figcaption b { font-size: 15px; }
+.pk-ba-arrow { font-size: 26px; color: var(--lf-accent); }
+.pk-gskills { display: grid; gap: 6px; margin-top: 8px; }
+.pk-gskills li { display: grid; grid-template-columns: 9em 9em minmax(0, 1fr); align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); }
+.pk-gskills li.is-zero { opacity: 0.6; }
+.pk-gs-name { font-weight: 800; font-size: 14px; }
+.pk-gs-lv { font-size: 13px; }
+.pk-gs-lv b { font-size: 17px; color: #e2583a; }
+.pk-gs-lv small { display: block; font-size: 11px; color: var(--lf-sub); }
+.pk-gs-where { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; }
+.pk-gs-link { color: var(--lf-accent); font-weight: 700; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 640px) { .pk-gskills li { grid-template-columns: 1fr auto; } .pk-gs-where { grid-column: 1 / -1; } }
+.pk-stairs { display: grid; gap: 4px; margin-top: 8px; }
+.pk-stairs li { display: grid; gap: 0; margin-left: calc(var(--i) * min(5%, 22px)); padding: 6px 10px; border-left: 4px solid color-mix(in srgb, var(--lf-accent) 45%, transparent); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--lf-accent) 7%, var(--lf-card)); }
+.pk-stairs li small { font-size: 11px; color: var(--lf-sub); }
+.pk-stairs li b { font-size: 13.5px; }
+.pk-stairs li.is-now { border-left-color: var(--pk-hi); background: color-mix(in srgb, var(--pk-hi) 30%, var(--lf-card)); }
+.pk-payrows { display: grid; gap: 4px; margin-top: 8px; }
+.pk-payrows li { display: grid; grid-template-columns: 4.5em 9em minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 8px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); font-size: 12.5px; }
+.pk-payrows small { color: var(--lf-sub); font-weight: 700; }
+@media (max-width: 640px) { .pk-payrows li { grid-template-columns: 4em 1fr; } .pk-payrows li span { grid-column: 1 / -1; } }
+.pk-nextroads { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.pk-nextroads div { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); font-size: 12.5px; }
+.pk-nextroads div.is-good { box-shadow: inset 0 0 0 2px var(--fit-good, #2f9e5b); }
+.pk-nextroads b { font-size: 14px; }
+.pk-nextroads small { color: var(--lf-sub); font-size: 11px; }
+.pk-chara.turn-r { transform: translateX(calc(-50% + 1.2cqi)) perspective(480px) rotateY(34deg) rotate(2.5deg); }
+.pk-chara.turn-l { transform: translateX(calc(-50% - 1.2cqi)) perspective(480px) rotateY(-34deg) rotate(-2.5deg); }
+.pk-chara.is-listen.turn-r { transform: translateX(-50%) perspective(480px) rotateY(20deg) rotate(1deg); }
+.pk-chara.is-listen.turn-l { transform: translateX(-50%) perspective(480px) rotateY(-20deg) rotate(-1deg); }

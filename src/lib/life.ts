@@ -28,7 +28,7 @@ export const PLACE_LABEL: Record<Place, string> = {
 export type Act = "pc" | "machine" | "build" | "carry" | "cook" | "teach" | "talk" | "cheer" | "down" | "rest";
 export type CutKind = "ほめられた" | "ピンチ" | "立ち上がる" | "人生のできごと";
 export type Who = "me" | "boss" | "senpai" | "peer" | "local" | "family" | "student";
-export type Talk = { who: Who; text: string };
+export type Talk = { who: Who; text: string; /** 話しかけている相手 */ to?: Who };
 export type Life = { money: Level; health: Level; learning: Level; ties: Level };
 export const LIFE_LABEL: Record<keyof Life, string> = { money: "お金のゆとり", health: "体力", learning: "学び", ties: "人とのつながり" };
 
@@ -575,7 +575,7 @@ export function changesOf(prev: Chapter | undefined, cur: Chapter, job: Job) {
 export function nameOf(job: Job, who: Who) {
   switch (who) {
     case "me":
-      return "分身";
+      return "あなた";
     case "boss":
     case "senpai":
     case "peer":
@@ -600,7 +600,7 @@ export const LSTEPS = ["jobs", "make", "life", "saves"] as const;
 /** G・H案（Higgsfield版）は、求人のあとに「会社のまとめ」をはさむ */
 export const PSTEPS = ["jobs", "karte", "make", "life", "saves"] as const;
 export type LStep = (typeof PSTEPS)[number];
-export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", karte: "会社のまとめ", make: "分身をつくる", life: "生涯を進める", saves: "人生を並べる" };
+export const LSTEP_LABEL: Record<LStep, string> = { jobs: "求人を選ぶ", karte: "会社のまとめ", make: "自分を設定", life: "生涯を進める", saves: "人生を並べる" };
 
 export type Save = { branch: BranchId; reached: number };
 
