@@ -877,21 +877,6 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
         <img src={art(c.style, PLACE_ART[ep.place])} alt={`${PLACE_LABEL[ep.place]}の場面`} className="pk-bg" />
         <span className="pk-tint" aria-hidden />
         {!intro && beat !== 3 && <Actors key={`${beat}`} c={c} s={s} cast={others} prev={prevPos} cur={layout(beat)} talk={talk} meMood={mood} meAct={beat === 4 ? "cheer" : act} review={vibeTalk} reduced={reduced} />}
-        {!intro && (
-          <span className="pk-beatno" aria-hidden>
-            {"①②③④⑤"[beat]} {BEATS[beat]}
-          </span>
-        )}
-        {beat === 2 && !intro && <span className={`pk-learnstamp ${ep.learn.how === "工夫" ? "is-self" : ""}`}>{ep.learn.how === "工夫" ? "自分で工夫した" : `${nameOf(s.job, ep.learn.who)}さんに教わった`}</span>}
-        {beat <= 1 && !intro && vibes.length > 0 && (
-          <ul className="pk-vibes">
-            {vibes.map((v) => (
-              <li key={v.id} className={`lf-vibe is-${v.tone} px-2 py-0.5 text-[11.5px]`}>
-                {v.from}「{v.quote.length > 16 ? `${v.quote.slice(0, 16)}…` : v.quote}」
-              </li>
-            ))}
-          </ul>
-        )}
         {beat === 4 && (
           <div className="pk-after">
             <img src={art(c.style, meArt(c.look, "元気"))} alt="" />
@@ -934,7 +919,7 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
         )}
       </div>
       <div className={`pk-cap beat-${beat}`} aria-live="polite">
-        <span className="pk-cap-tag">{intro ? "時間が進む" : `${"①②③④⑤"[beat]} ${BEATS[beat]}`}</span>
+        <span className="pk-cap-tag">{intro ? "時間が進む" : `${"①②③④⑤"[beat]} ${BEATS[beat]}${beat === 2 ? (ep.learn.how === "工夫" ? "（自分で工夫）" : `（${nameOf(s.job, ep.learn.who)}さんに教わる）`) : ""}`}</span>
         <span className="pk-cap-txt">{intro ? `${prev ? `${prev.when}から、` : ""}${ep.when}へ。` : beat === 4 ? `${ep.after.when}、${cap[4]}` : cap[beat]}</span>
         <span className="pk-cap-ctl">
           <span className="pk-speed" role="group" aria-label="進む速さ">
@@ -949,6 +934,15 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
           </button>
         </span>
       </div>
+      {beat <= 1 && !intro && vibes.length > 0 && (
+        <ul className="pk-stagestrip is-top" aria-label="口コミから入った言葉">
+          {vibes.map((v) => (
+            <li key={v.id} className={`lf-vibe is-${v.tone}`}>
+              {v.from}「{v.quote.length > 16 ? `${v.quote.slice(0, 16)}…` : v.quote}」
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -1559,16 +1553,46 @@ function LifeEvents({ c, s, life, setLife, partner, setPartner }: { c: Ctx; s: L
 }
 
 /* ---------- 分かれ道に入ったことを、はっきり見せる ---------- */
+/** 分かれ道：場面の絵の上に6本の道を重ねて出す。押すとその道の場面へ進む（自動で進めていても、ここで止まって待つ） */
+function ForkPick({ c, s }: { c: Ctx; s: LifeState }) {
+  const start = s.profile.age;
+  const line = (b: BranchId) => {
+    const d = s.job.detailed?.[b];
+    const t = d ? d.chapters[0].events[0] : simpleBranch(s.job, b, start).lines[0] ?? "";
+    return /^\d/.test(t) ? t.replace(/^\d+..\s*/, "") : t;
+  };
+  return (
+    <div className="pk-forkpick" data-h="forkpick" role="dialog" aria-label="分かれ道。道を1つ選んでください">
+      <p className="pk-forkpick-head">
+        <b>◆ 分かれ道</b>　ここで、道を1つ選んでください
+      </p>
+      <ul className="pk-forkpick-list">
+        {BRANCHES.map((b, i) => (
+          <li key={b.id} style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+            <button type="button" onClick={() => s.choose(b.id)}>
+              <img src={art(c.style, destArt(s.job, b.id, start))} alt="" />
+              <span className="pk-forkpick-txt">
+                <b>{b.label}</b>
+                <small>{line(b.id)}</small>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ForkCall({ s, auto }: { s: LifeState; auto: boolean }) {
   return (
     <div className="pk-forkcall" data-h="forkcall" role="alert">
       <p className="pk-forkcall-eyebrow">◆ 分かれ道　入社{s.years}年後</p>
       <p className="lf-h pk-forkcall-title">ここで、道を選んでください</p>
       <p className="pk-forkcall-sub">
-        身についた専門知識が6本の道でどう活きるかを見て、1本選んでください。
+        {auto ? "自動で進めていても、ここで止まって待っています。" : ""}場面の絵の上のカードから選べます。道ごとの詳しい判定は下にあります。
       </p>
-      <button type="button" className="lf-btn pk-forkcall-btn" onClick={() => document.querySelector('[data-h="branches"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-        6本の道を見て選ぶ ▼
+      <button type="button" className="pk-futbtn pk-forkcall-btn px-4 py-2 text-[13.5px]" onClick={() => document.querySelector('[data-h="branches"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+        道ごとの詳しい判定を見る ▼
       </button>
     </div>
   );
@@ -1903,7 +1927,7 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
   /* 分かれ道に着いたら、道を選ぶ所までスクロールする（自動で進めていても、ここで止まって待つ） */
   useEffect(() => {
     if (!choosing) return;
-    const t = window.setTimeout(() => document.querySelector('[data-h="forkcall"]')?.scrollIntoView({ behavior: "smooth", block: "start" }), 1800);
+    const t = window.setTimeout(() => document.querySelector('[data-h="scene"]')?.scrollIntoView({ behavior: "smooth", block: "center" }), 600);
     return () => clearTimeout(t);
   }, [choosing, s.idx]);
   return (
@@ -2549,24 +2573,7 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
             {chapterLabel(ch, s.profile.age)}・{PLACE_LABEL[ch.place]}
           </span>
         </div>
-        {(ch.vibes?.length ?? 0) > 0 && (
-          <ul className="pk-vibes">
-            {ch.vibes!.map((v) => (
-              <li key={v.id} className={`lf-vibe is-${v.tone} px-2 py-0.5 text-[11.5px]`}>
-                {v.from}「{v.quote.length > 16 ? `${v.quote.slice(0, 16)}…` : v.quote}」
-              </li>
-            ))}
-          </ul>
-        )}
-        {gains.length > 0 && fx.phase === "done" && (
-          <ul className="pk-gainchips">
-            {gains.map((g) => (
-              <li key={g.k.id}>
-                ＋{g.k.name}　{g.from < 0 ? "知った" : `${STAGES[g.from]}→${STAGES[g.to]}`}
-              </li>
-            ))}
-          </ul>
-        )}
+        {s.atFork && !s.branch && !intro && fx.phase === "done" && <ForkPick c={c} s={s} />}
         {ch.lifeEvent && (
           <div className="pk-event">
             <img src={art(c.style, eventArt(ch.lifeEvent))} alt="" />
@@ -2619,6 +2626,20 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
         )}
       </div>
       {fx.phase === "rank" && (gains.length > 0 || shines.length > 0) && <p className="pk-whybelow">理由：{ch.events[0]}</p>}
+      {fx.phase === "done" && (gains.length > 0 || (ch.vibes?.length ?? 0) > 0) && (
+        <ul className="pk-stagestrip" aria-label="この場面で手に入れたスキル">
+          {gains.map((g) => (
+            <li key={g.k.id} className="is-gain">
+              ＋{g.k.name}　{g.from < 0 ? "知った" : `${STAGES[g.from]}→${STAGES[g.to]}`}
+            </li>
+          ))}
+          {(ch.vibes ?? []).map((v) => (
+            <li key={v.id} className={`lf-vibe is-${v.tone}`}>
+              {v.from}「{v.quote.length > 16 ? `${v.quote.slice(0, 16)}…` : v.quote}」
+            </li>
+          ))}
+        </ul>
+      )}
       <button type="button" className={`pk-skip text-[12px] ${fx.phase !== "done" && !reduced ? "" : "is-off"}`} onClick={fx.skip} tabIndex={fx.phase !== "done" ? 0 : -1}>
         演出を飛ばす ▶▶
       </button>

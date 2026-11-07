@@ -808,3 +808,28 @@ details[open] > summary .pk-open-hint { display: none; }
 .pk-stagebox, .pk-stagewrap { max-width: 960px; width: 100%; justify-self: center; }
 .pk-life:not(.pk-yr) .pk-node-pic { width: 40px; height: 40px; }
 .pk-life:not(.pk-yr) { padding-top: 8px; gap: 6px; }
+
+/* ---------- 2026-11-08 分かれ道を絵の上で選ぶ・吹き出しと重ねない・話す相手の方を向く ---------- */
+.pk-actor.is-talking img, .pk-actor.is-listening img { transform: perspective(900px) rotateY(calc(var(--sx, 1) * 26deg)) scaleX(var(--sx, 1)); }
+.pk-stagebox:has(.pk-forkpick) .pk-forkflag { display: none; }
+.pk-forkpick { position: absolute; inset: 0; z-index: 8; display: grid; align-content: center; gap: 2.2cqi; padding: 3cqi 3.5cqi; background: rgba(28, 22, 18, 0.62); backdrop-filter: blur(1.5px); animation: pk-in 0.45s both; }
+.pk-forkpick-head { justify-self: center; padding: 0.5cqi 2.4cqi; border-radius: 999px; background: var(--pk-hi); color: #2e2420; font-weight: 800; font-size: clamp(12px, 2.6cqi, 22px); }
+.pk-forkpick-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8cqi; }
+.pk-forkpick-list li { animation: pk-evin 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+.pk-forkpick-list button { display: grid; grid-template-columns: 34% minmax(0, 1fr); align-items: center; gap: 1.4cqi; width: 100%; height: 100%; padding: 1.1cqi; border-radius: 1.6cqi; background: var(--lf-card); color: var(--lf-ink); text-align: left; box-shadow: 0 0.6cqi 0 rgba(0, 0, 0, 0.35); border: 0.35cqi solid transparent; transition: transform 0.15s, border-color 0.15s; }
+.pk-forkpick-list button:hover, .pk-forkpick-list button:focus-visible { transform: translateY(-0.4cqi); border-color: var(--pk-hi); outline: none; }
+.pk-forkpick-list img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 1cqi; }
+.pk-forkpick-txt { display: grid; gap: 0.3cqi; min-width: 0; }
+.pk-forkpick-txt b { font-size: clamp(12px, 2.3cqi, 20px); line-height: 1.2; }
+.pk-forkpick-txt small { font-size: clamp(9.5px, 1.45cqi, 13px); line-height: 1.4; color: var(--lf-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pk-forkpick-txt em { justify-self: start; padding: 0 0.9cqi; border-radius: 999px; background: color-mix(in srgb, var(--lf-accent) 14%, var(--lf-card)); color: var(--lf-accent); font-style: normal; font-weight: 800; font-size: clamp(9px, 1.35cqi, 12px); }
+@container (max-width: 560px) {
+  .pk-forkpick { gap: 6px; padding: 8px; }
+  .pk-forkpick-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .pk-forkpick-list button { grid-template-columns: 1fr; padding: 5px 8px; }
+  .pk-forkpick-list img, .pk-forkpick-txt small, .pk-forkpick-txt em { display: none; }
+  .pk-forkpick-txt b { font-size: 13px; }
+}
+.pk-stagestrip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pk-stagestrip li { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+.pk-stagestrip li.is-gain { background: var(--pk-hi); color: #2e2420; font-weight: 800; animation: pk-chip 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
