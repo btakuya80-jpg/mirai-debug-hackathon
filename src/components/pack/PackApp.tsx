@@ -44,6 +44,7 @@ import {
 } from "@/lib/life";
 import { usePrefersReducedMotion } from "@/lib/mirai";
 import type { Vibe } from "@/lib/reviews";
+import type { Place } from "@/lib/life";
 import { PACKS, PLACE_ART, art, eventArt, meArt, whoArt, type Look, type PackKey, type StyleId } from "@/lib/packs";
 
 type Fam = "g" | "h";
@@ -134,9 +135,11 @@ export default function PackApp({ style }: { style: StyleId }) {
           <section className="grid gap-6">
             <PromiseNote />
             <Title eyebrow="STEP 5　人生を並べる" t={T.saves} sub={T.savesSub} />
-            <NextChecks s={s} />
             {fam === "h" && <RoadMap c={c} s={s} compare />}
-            <FitTable s={s} />
+            <details className="pk-fitwrap">
+              <summary className="lf-btn px-5 py-2.5 text-[14px]">専門知識がどの道で活きるか見る ▼</summary>
+              <FitTable s={s} />
+            </details>
             <SaveCompare
               s={s}
               thumb={(b) => {
@@ -251,6 +254,7 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
         <div className="grid content-center gap-5">
           <PromiseNote />
           <p className="pk-eyebrow text-[12px]">求人1件から、入社3年とその先を試運転</p>
+          <p className="pk-problem">入社してみないと、合うか分からない。</p>
           <h1 className="lf-h text-[34px] leading-[1.25] sm:text-[48px]">
             <span className="w">応募する前に、</span>
             <br />
@@ -353,8 +357,8 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
             <figcaption className="text-[13px]">架空の町。5つの職場の求人があります。</figcaption>
           </figure>
         )}
-        <h2 className="lf-h text-[20px]">または、架空の求人から選ぶ</h2>
-        <JobBoard s={s} thumb={(j) => <JobThumb c={c} job={j} />} cta="この会社のまとめを見る" next="karte" showUrl={false} showExtras={false} />
+        <h2 className="lf-h text-[20px]">または、架空の求人から選ぶ（押すと会社のまとめへ）</h2>
+        <JobBoard s={s} thumb={(j) => <JobThumb c={c} job={j} />} cta="この会社のまとめを見る" next="karte" showUrl={false} showExtras={false} direct />
       </div>
       <div className="lf-card pk-future-entry p-5" data-h="futureentry">
         <p className="pk-eyebrow text-[12px]">将来の導線（イメージ・いまは動きません）</p>
@@ -379,11 +383,13 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
   );
 }
 
+/* 求人カードに立つ人は、職場ごとに変える */
+const THUMB_WHO: Partial<Record<Place, PackKey>> = { factory: "boss", office: "partner-f", construction: "senpai", logistics: "peer", food: "partner-m" };
 function JobThumb({ c, job }: { c: Ctx; job: Job }) {
   return (
     <span className="pk-thumb block">
       <img src={art(c.style, PLACE_ART[job.place])} alt="" className="pk-thumb-bg" loading="lazy" />
-      <img src={art(c.style, "boss")} alt="" className="pk-thumb-boss" loading="lazy" />
+      <img src={art(c.style, THUMB_WHO[job.place] ?? "boss")} alt="" className="pk-thumb-boss" loading="lazy" />
       <span className="pk-thumb-tag">{PLACE_LABEL[job.place]}</span>
     </span>
   );
@@ -423,26 +429,34 @@ function Karte({ c, s }: { c: Ctx; s: LifeState }) {
         <div className="grid content-start gap-5">
           <div className="lf-card p-5" data-h="learn">
             <p className="lf-h text-[18px]">ここで身につく専門知識</p>
-            <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">どの場面で身につくかと、求人原稿の出典。</p>
+            <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">押すと、身につく場面と出典が開きます。</p>
             <ul className="mt-3 grid gap-3">
               {ks.map((x) => (
                 <li key={x.id} className="pk-learn">
-                  <p className="lf-h text-[16px]">{x.name}</p>
-                  <p className="text-[13.5px] leading-6">{x.what}</p>
-                  <p className="text-[12.5px] text-[var(--lf-sub)]">身につく場面：{x.where}</p>
-                  {x.src ? (
-                    <p className="pk-src">
-                      出典：{x.src.para ? `求人原稿 ${x.src.para}段落目` : "求人の本文"}「{x.src.quote}」
-                    </p>
-                  ) : (
-                    <p className="pk-src is-guess">{x.assumed ? "仮定：" : "出典なし："}求人に書いていないため、シナリオ上の想定です</p>
-                  )}
+                  <details>
+                    <summary>
+                      <b className="lf-h text-[16px]">{x.name}</b>
+                      {!x.src && <span className="pk-assume">仮定</span>}
+                      <span className="block text-[13.5px] leading-6">{x.what}</span>
+                    </summary>
+                    <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">身につく場面：{x.where}</p>
+                    {x.src ? (
+                      <p className="pk-src">
+                        出典：{x.src.para ? `求人原稿 ${x.src.para}段落目` : "求人の本文"}「{x.src.quote}」
+                      </p>
+                    ) : (
+                      <p className="pk-src is-guess">{x.assumed ? "仮定：" : "出典なし："}求人に書いていないため、シナリオ上の想定です</p>
+                    )}
+                  </details>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="lf-card p-5">
-            <p className="lf-h text-[18px]">読み取った項目</p>
+          <details className="lf-card pk-kartebox p-5">
+            <summary className="lf-h text-[16px]">
+              読み取った項目　<span className="text-[14px]">読み取れた {k.known}・<b className="pk-unknown">不明 {k.unknown}</b></span>
+              <small className="pk-open-hint">押して開く</small>
+            </summary>
             <table className="pk-karte mt-3 w-full text-[13.5px]">
               <tbody>
                 {k.items.map((it) => (
@@ -461,7 +475,7 @@ function Karte({ c, s }: { c: Ctx; s: LifeState }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </details>
         </div>
         <div className="grid content-start gap-5">
           <CompanyExtras s={s} stack />
@@ -641,30 +655,37 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
     if (b <= 4) return setPos({ e: pos.e, beat: Math.max(0, b) as Beat });
     if (!last) {
       setPos({ e: pos.e + 1, beat: 0 });
-      document.querySelector('[data-h="ephead"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector('[data-h="topbar"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else document.querySelector('[data-h="growth"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const pay = payOfJob(s.job);
   return (
-    <section className="grid gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <p className="pk-eyebrow text-[12px]">STEP 4　入社{s.years}年を、場面で見る</p>
-          <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">
-            {s.job.company}で働く、最初の{s.years}年
-          </h1>
-          <p className="mt-1 text-[13px] leading-6 text-[var(--lf-sub)]">仕事 → 壁 → 学び → スキルアップ → その後。{s.years}年後に分かれ道が来ます。</p>
-        </div>
+    <section className="grid gap-3">
+      <div className="pk-topbar" data-h="topbar">
+        <h1 className="pk-topbar-title">
+          <small>STEP 4</small>
+          {s.job.company}で働く、最初の{s.years}年
+        </h1>
+        <YearsSwitch s={s} thin />
       </div>
-      <YearsSwitch s={s} />
       <YearOneLine c={c} s={s} pos={pos} onPick={(e) => setPos({ e, beat: 0 })} />
+      <EpisodeStage key={`${pos.e}-${c.look}`} c={c} s={s} ep={ep} prev={eps[pos.e - 1]} beat={pos.beat} vibes={vibes} speed={speed} setSpeed={setSpeed} onBeat={goBeat} />
+      {pos.beat === 4 && speed !== "manual" && (
+        <AutoNext
+          key={`auto-${pos.e}`}
+          label={last ? `${s.years}年後の分かれ道へ` : `次の場面へ：${eps[pos.e + 1].when}「${eps[pos.e + 1].title}」`}
+          ms={last ? NEXT_MS[speed] + 6000 : NEXT_MS[speed]}
+          onGo={() => (last ? onFuture(s.years) : goBeat(5))}
+          onStop={() => setSpeed("manual")}
+        />
+      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 content-start gap-3">
-          <div className="pk-ephead" data-h="ephead">
-            <p className="pk-eyebrow text-[12px]">
-              場面 {pos.e + 1} / {eps.length}　{ep.when}（{ageAt(ch, s.profile.age)}歳）
-            </p>
-            <p className="lf-h text-[19px] leading-snug sm:text-[22px]">「{ep.title}」</p>
+          <details className="pk-ephead" data-h="ephead">
+            <summary className="pk-ephead-sum">
+              場面 {pos.e + 1} / {eps.length}　{ep.when}（{ageAt(ch, s.profile.age)}歳）　<b>「{ep.title}」</b>
+              <small className="pk-open-hint">場面の説明を開く</small>
+            </summary>
             <p className="pk-mean">
               <b>どういうこと？</b>
               {ep.mean}
@@ -689,25 +710,18 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
                 </li>
               ))}
             </ul>
-          </div>
-          <EpisodeStage key={`${pos.e}-${c.look}`} c={c} s={s} ep={ep} prev={eps[pos.e - 1]} beat={pos.beat} vibes={vibes} speed={speed} setSpeed={setSpeed} onBeat={goBeat} />
-          {pos.beat === 4 && speed !== "manual" && (
-            <AutoNext
-              key={`auto-${pos.e}`}
-              label={last ? `${s.years}年後の分かれ道へ` : `次の場面へ：${eps[pos.e + 1].when}「${eps[pos.e + 1].title}」`}
-              ms={last ? NEXT_MS[speed] + 6000 : NEXT_MS[speed]}
-              onGo={() => (last ? onFuture(s.years) : goBeat(5))}
-              onStop={() => setSpeed("manual")}
-            />
-          )}
+          </details>
           {pos.beat >= 3 && <SkillRoads s={s} gained={[{ k, from: ep.up.from, to: ep.up.to }]} lv={lv} title={`この場面で手に入れたスキル（${ep.when}）`} />}
           <StoryCard s={s} ep={ep} k={k} beat={pos.beat} last={last} next={eps[pos.e + 1]} onBeat={goBeat} />
           {done && <GrowthCard c={c} s={s} mode={{ kind: "ep", e: pos.e, beat: pos.beat }} onReplay={(e) => setPos({ e, beat: 0 })} onFuture={onFuture} />}
           <FutureCard s={s} done={done} onFuture={onFuture} />
         </div>
         <aside className="grid content-start gap-4">
-          <KnowBook c={c} s={s} lv={lv} justUp={pos.beat >= 3 ? ep.up.know : null} upTo={pos.e} upBeat={pos.beat} />
           <FeelBox c={c} s={s} feels={feelsOfEpisode(ep, pos.beat)} />
+          <details className="pk-bookwrap" open={pos.beat >= 3}>
+            <summary className="lf-h text-[15px]">専門知識の手帳を開く</summary>
+            <KnowBook c={c} s={s} lv={lv} justUp={pos.beat >= 3 ? ep.up.know : null} upTo={pos.e} upBeat={pos.beat} />
+          </details>
           <div className="lf-card p-4" data-h="pay">
             <p className="lf-h text-[15px]">給料</p>
             <p className="mt-1 text-[16px] font-bold">{pay.pay}</p>
@@ -856,7 +870,7 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
   const tints = [...(beat <= 1 ? vibes.map((v) => v.tint) : []), beat === 1 ? ep.wall.tint : beat === 2 ? "warm" : undefined].filter(Boolean);
   const mood: Mood = beat === 1 ? "しんどい" : beat >= 3 ? "元気" : "普通";
   const act = beat === 1 ? "down" : ep.act;
-  const cap = [ep.work.text, ep.wall.text, ep.learn.text, `${kw.name}　Lv.${ep.up.from} → Lv.${ep.up.to}`, ep.after.text];
+  const cap = [ep.work.text, ep.wall.text, ep.learn.text, `${kw.name}　Lv.${ep.up.from} → Lv.${ep.up.to}。理由：${ep.learn.text}`, ep.after.text];
   return (
     <div className="pk-stagewrap" data-h="scene">
       <div className={`pk-stage pk-epstage beat-${beat} ${beat === 1 && !intro ? "is-down" : ""} ${tints.map((t) => `tint-${t}`).join(" ")}`}>
@@ -903,7 +917,6 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat }: 
               <span className="pk-lvname">
                 {LV_NAME[ep.up.from]} → <b>{LV_NAME[ep.up.to]}</b>
               </span>
-              <span className="pk-lvwhy">理由：{ep.learn.text}</span>
             </span>
           </button>
         )}
@@ -1069,12 +1082,26 @@ function FutureCard({ s, done, onFuture }: { s: LifeState; done: boolean; onFutu
 
 /* 分かれ道が来る時点（1年／3年／5年）。年数だけで一律に上げず、会社・職務ごとの育ち方で差が出る */
 const YEARS_NOTE: Record<Years, string> = { 1: "知った・できる まで。移る道はまだ狭い", 3: "任される。6本の道がはっきり見える（初期）", 5: "教えられる。独立・海外など活きる道が増える" };
-function YearsSwitch({ s, compact }: { s: LifeState; compact?: boolean }) {
+function YearsSwitch({ s, compact, thin }: { s: LifeState; compact?: boolean; thin?: boolean }) {
   const ks = knowOf(s.job);
   const top = (y: Years) => {
     const idx = y === 1 ? 2 : y === 3 ? 3 : 4;
     return ks.filter((k) => (k.grow[Math.min(idx, k.grow.length - 1)] ?? -1) >= (y === 5 ? 3 : y === 3 ? 2 : 1)).length;
   };
+  if (thin)
+    return (
+      <div className="pk-years-thin" data-h="years" role="group" aria-label="分かれ道が来る時点">
+        <span className="pk-years-thin-head">分かれ道</span>
+        {([1, 3, 5] as Years[]).map((y) => (
+          <button key={y} type="button" aria-pressed={s.years === y} onClick={() => s.setYears(y)} title={YEARS_NOTE[y]}>
+            {y}年後
+          </button>
+        ))}
+        <span className="pk-years-thin-diff">
+          {s.years}年後に「{s.years === 5 ? "教えられる" : s.years === 3 ? "任される" : "できる"}」まで育つ専門知識：<b>{top(s.years)}つ</b>
+        </span>
+      </div>
+    );
   return (
     <div className={`pk-years ${compact ? "is-compact" : ""}`} data-h="years">
       <p className="pk-years-head">分かれ道が来る時点（初期は3年）</p>
@@ -1304,10 +1331,7 @@ function NextChecks({ s }: { s: LifeState }) {
 function YearOneLine({ c, s, pos, onPick }: { c: Ctx; s: LifeState; pos: { e: number; beat: Beat }; onPick: (e: number) => void }) {
   const eps = episodesOf(s.job);
   return (
-    <div className={`pk-life pk-yr ${c.fam === "h" ? "is-road" : ""}`} data-h="yearone">
-      <p className="pk-yr-head">
-        <b>入社{s.years}年</b>　{s.profile.age}歳 → {s.profile.age + s.years}歳
-      </p>
+    <div className={`pk-life pk-yr is-thin ${c.fam === "h" ? "is-road" : ""}`} data-h="yearone">
       <ol className="pk-nodes" aria-label="入社からの場面">
         {eps.map((ep, i) => {
           const k = knowOf(s.job).find((x) => x.id === ep.up.know)!;
@@ -1585,6 +1609,35 @@ function StayCompare({ s }: { s: LifeState }) {
   );
 }
 
+/** 見本の求人の「応募する」：押すと、応募先が無いことを出す */
+function ApplyDemo() {
+  const [msg, setMsg] = useState(false);
+  return (
+    <span className="grid gap-1.5 justify-items-start">
+      <button type="button" className="lf-btn px-4 py-2 text-[13.5px]" onClick={() => setMsg(true)}>
+        応募する ▶
+      </button>
+      {msg && <span className="pk-applymsg" role="status">見本の求人のため、応募先はありません。</span>}
+    </span>
+  );
+}
+
+/** 「不明」だった項目を、面接で聞く自然な質問にする */
+function askOf(label: string): string {
+  const m: [string[], string][] = [
+    [["創業", "設立", "会社ができ"], "会社ができて、どれくらいになりますか？"],
+    [["人数", "社員数", "従業員"], "同じ職場には、何人くらいいますか？"],
+    [["年齢", "年代"], "職場には、どんな年代の人が多いですか？"],
+    [["研修", "資格"], "入ってから受けられる研修や、資格の支えはありますか？"],
+    [["海外"], "海外で働く道はありますか？"],
+    [["残業"], "ふだんの残業は、月にどれくらいありますか？"],
+    [["3年後", "続けて", "定着", "離職"], "同じ時期に入った人は、いまも続けていますか？"],
+    [["休み", "休日"], "休みは、どのように決まりますか？"],
+    [["給与", "給料", "昇給", "賞与"], "給料は、どんな時に上がりますか？"],
+  ];
+  return m.find(([ks]) => ks.some((k) => label.includes(k)))?.[1] ?? `${label}について、教えていただけますか？`;
+}
+
 /* ---------- 持ち帰り画面（システムのゴール）：応募するかを、自分で決められる材料 ---------- */
 const ROAD_WORD = ["細い道", "ふつうの道", "太い道"];
 function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
@@ -1598,7 +1651,11 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
   const band = (w: number) => (w >= max * 0.75 ? 2 : w >= max * 0.4 ? 1 : 0);
   const pts = ai?.points.good.length ? ai.points : POINTS[s.job.id] ?? { good: [], care: [] };
   const unknown = karteOf(s.job).items.filter((i) => !i.value);
-  const qs = [...(CHECKS[s.job.id] ?? []), ...unknown.slice(0, 2).map((i) => `求人に書いていない「${i.label}」は、どうなっていますか？`)].slice(0, 5);
+  const base = CHECKS[s.job.id] ?? [];
+  const extra = unknown
+    .map((i) => askOf(i.label))
+    .filter((q) => !base.some((b) => b === q || ["資格", "残業", "夜勤", "海外"].some((k) => q.includes(k) && b.includes(k))));
+  const qs = [...base, ...extra].slice(0, 5);
   const [saved, setSaved] = useState<string | null>(null);
   const textOf = () =>
     [
@@ -1761,7 +1818,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
             <b>応募する</b>
             <span>質問を持って、応募や職場見学に進む。</span>
             {jobByUrl(s.job.url) ? (
-              <span className="text-[12px] text-[var(--lf-sub)]">見本の求人なので、応募ページはありません。</span>
+              <ApplyDemo />
             ) : (
               <a className="lf-btn px-4 py-2 text-[13.5px]" href={s.job.url} target="_blank" rel="noreferrer">
                 求人ページを開く ↗
@@ -1850,40 +1907,35 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
     return () => clearTimeout(t);
   }, [choosing, s.idx]);
   return (
-    <section className="grid gap-5">
-      <PromiseNote />
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <p className="pk-eyebrow text-[12px]">STEP 4　{COPY[c.fam].life}</p>
-          <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">
-            {s.job.company}で働く、{horizon >= 99 ? `${END_AGE}歳まで` : `${horizon}年後まで`}
-          </h1>
-          <p className="mt-1 text-[13px] text-[var(--lf-sub)]">
-            {eps.length > 0 && (
-              <button type="button" className="pk-link" onClick={() => onYearOne(eps.length - 1)}>
-                最初の1年の場面に戻る
-              </button>
-            )}
-          </p>
-        </div>
+    <section className="grid gap-3">
+      <div className="pk-topbar" data-h="topbar">
+        <h1 className="pk-topbar-title">
+          <small>STEP 4</small>
+          {s.job.company}で働く、{horizon >= 99 ? `${END_AGE}歳まで` : `${horizon}年後まで`}
+          {eps.length > 0 && (
+            <button type="button" className="pk-link ml-2 text-[12.5px]" onClick={() => onYearOne(eps.length - 1)}>
+              最初の1年に戻る
+            </button>
+          )}
+        </h1>
+        <YearsSwitch s={s} thin />
       </div>
-      <YearsSwitch s={s} />
       {c.fam === "g" ? <LifeLine c={c} s={s} horizon={horizon} onYearOne={onYearOne} life={life} /> : <RoadMap c={c} s={s} horizon={horizon} onYearOne={onYearOne} />}
+      <div className={`pk-stagebox ${choosing ? "is-fork" : ""}`}>
+        <Stage key={`${s.idx}-${s.branch ?? ""}-${c.look}`} c={c} s={s} ch={ch} prev={s.prev} />
+        {choosing && (
+          <span className="pk-forkflag" aria-hidden>
+            ◆ 分かれ道　ここで道を選んでください
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[12.5px]">
+        <PromiseNote />
+        <SpeedSwitch speed={speed} setSpeed={setSpeed} />
+      </div>
+      {canAuto && <AutoNext key={`auto-${s.idx}-${s.branch ?? ""}`} label={`次の場面へ：${chapterLabel(nextCh!, s.profile.age)}`} ms={CH_MS[speed as Exclude<Speed, "manual">]} onGo={s.next} onStop={() => setSpeed("manual")} />}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 content-start gap-4">
-          <div className={`pk-stagebox ${choosing ? "is-fork" : ""}`}>
-            <Stage key={`${s.idx}-${s.branch ?? ""}-${c.look}`} c={c} s={s} ch={ch} prev={s.prev} />
-            {choosing && (
-              <span className="pk-forkflag" aria-hidden>
-                ◆ 分かれ道　ここで道を選んでください
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[12.5px]">
-            <span className="text-[var(--lf-sub)]">進む速さ</span>
-            <SpeedSwitch speed={speed} setSpeed={setSpeed} />
-          </div>
-          {canAuto && <AutoNext key={`auto-${s.idx}-${s.branch ?? ""}`} label={`次の場面へ：${chapterLabel(nextCh!, s.profile.age)}`} ms={CH_MS[speed as Exclude<Speed, "manual">]} onGo={s.next} onStop={() => setSpeed("manual")} />}
           {choosing && <ForkCall s={s} auto={speed !== "manual"} />}
           {s.atFork && <ForkDeal c={c} s={s} />}
           {gains.length > 0 && <SkillRoads s={s} gained={gains.map((g) => ({ k: g.k, from: g.from + 1, to: g.to + 1 }))} lv={lvNow} title={`この場面で手に入れたスキル（${chapterLabel(ch, s.profile.age)}）`} />}
@@ -1973,8 +2025,11 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
           {(showGrowth !== (s.atEnd || nextHidden)) && <GrowthCard c={c} s={s} mode={{ kind: "ch" }} onReplay={(e) => onYearOne(e)} />}
         </div>
         <aside className="grid content-start gap-4">
-          <KnowBook c={c} s={s} />
           <FeelBox c={c} s={s} feels={feelsOfChapter(s, ch)} />
+          <details className="pk-bookwrap">
+            <summary className="lf-h text-[15px]">専門知識の手帳を開く</summary>
+            <KnowBook c={c} s={s} />
+          </details>
         </aside>
       </div>
     </section>
@@ -2559,20 +2614,11 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
                   ))}
                 </span>
               )}
-              {(gains.length > 0 || shines.length > 0) && <span className="pk-lvwhy">理由：{ch.events[0]}</span>}
-              {ups.length > 0 && (
-                <span className="flex flex-wrap justify-center gap-1.5">
-                  {ups.slice(0, 4).map((u, i) => (
-                    <span key={u.name} className="pk-up" style={{ animationDelay: `${0.6 + i * 0.12}s` }}>
-                      {u.name} {u.from}→<b>{u.to}</b>
-                    </span>
-                  ))}
-                </span>
-              )}
             </span>
           </button>
         )}
       </div>
+      {fx.phase === "rank" && (gains.length > 0 || shines.length > 0) && <p className="pk-whybelow">理由：{ch.events[0]}</p>}
       <button type="button" className={`pk-skip text-[12px] ${fx.phase !== "done" && !reduced ? "" : "is-off"}`} onClick={fx.skip} tabIndex={fx.phase !== "done" ? 0 : -1}>
         演出を飛ばす ▶▶
       </button>

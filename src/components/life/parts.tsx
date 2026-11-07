@@ -27,7 +27,7 @@ import { COMPANY_INFO, SAMPLE_REVIEWS } from "@/lib/reviews";
 export const LEVEL_N: Record<Level, number> = { 低: 1, 中: 2, 高: 3 };
 
 /* ---------- 1. 求人を選ぶ ---------- */
-export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make", showUrl = true, showExtras = true }: { s: LifeState; thumb: (j: Job) => ReactNode; cta?: string; next?: LStep; showUrl?: boolean; showExtras?: boolean }) {
+export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make", showUrl = true, showExtras = true, direct = false }: { s: LifeState; thumb: (j: Job) => ReactNode; cta?: string; next?: LStep; showUrl?: boolean; showExtras?: boolean; direct?: boolean }) {
   const [url, setUrl] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const load = (u: string) => {
@@ -81,7 +81,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make
           const on = s.jobId === j.id;
           return (
             <li key={j.id}>
-              <button type="button" aria-pressed={on} onClick={() => s.pickJob(j.id)} className={`lf-card lf-job grid h-full w-full content-start overflow-hidden p-0 text-left ${on ? "is-on" : ""}`}>
+              <button type="button" aria-pressed={on} onClick={() => { s.pickJob(j.id); if (direct) s.go(next); }} className={`lf-card lf-job grid h-full w-full content-start overflow-hidden p-0 text-left ${on ? "is-on" : ""}`}>
                 <span className="block">{thumb(j)}</span>
                 <span className="grid gap-1.5 p-4">
                   <span className="text-[12px] text-[var(--lf-sub)]">
@@ -98,7 +98,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make
                       </span>
                     ))}
                   </span>
-                  {j.detailed && <span className="text-[11.5px] font-bold text-[var(--lf-accent)]">デモ用に生涯2本を作り込んだ求人</span>}
+                  {direct && <span className="pk-jobgo">{cta} ▶</span>}
                 </span>
               </button>
             </li>
@@ -106,6 +106,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make
         })}
       </ul>
       {showExtras && <CompanyExtras s={s} />}
+      {!direct && (
       <div className="lf-card grid gap-2 p-5 text-[14px] leading-7">
         <p className="lf-h text-[16px]">
           {s.job.company}「{s.job.title}」
@@ -122,6 +123,7 @@ export function JobBoard({ s, thumb, cta = "この求人で試す", next = "make
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -403,8 +405,8 @@ export function SaveCompare({ s, thumb }: { s: LifeState; thumb: (b: BranchId) =
   const order = [...s.saves, ...BRANCHES.map((b) => b.id).filter((b) => !s.saves.includes(b))];
   return (
     <div className="grid gap-4" data-h="saves">
-      <div className="lf-scroll -mx-4 overflow-x-auto px-4 pb-2">
-        <div className="grid auto-cols-[minmax(250px,1fr)] grid-flow-col gap-4">
+      <div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {order.map((id, n) => {
             const b = BRANCHES.find((x) => x.id === id)!;
             const d = s.job.detailed?.[id];
@@ -430,16 +432,6 @@ export function SaveCompare({ s, thumb }: { s: LifeState; thumb: (b: BranchId) =
                         ))
                       : sb.lines.map((l) => <li key={l}>{l}</li>)}
                   </ol>
-                  <LifeBars life={last ? last.life : sb.life} />
-                  {last && (
-                    <p className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
-                      {ABILITIES.map((a, k) => (
-                        <span key={a} className="whitespace-nowrap">
-                          {a} <b>{last.abilities[k]}</b>
-                        </span>
-                      ))}
-                    </p>
-                  )}
                   <button
                     type="button"
                     className="lf-rewind mt-1 justify-self-start px-3 py-1.5 text-[12.5px]"
@@ -457,7 +449,7 @@ export function SaveCompare({ s, thumb }: { s: LifeState; thumb: (b: BranchId) =
         </div>
       </div>
       <p className="text-[13px] leading-6 text-[var(--lf-sub)]">
-        ここに出るのは「予測」ではなく、AIが何度も試走して見えた筋書き（シナリオ）です。どの道が正解かは決めません。合否・点数・％は、企業に渡しません。
+        予測ではなく筋書き（シナリオ）です。どの道が正解かは決めません。
       </p>
     </div>
   );

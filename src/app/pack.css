@@ -766,3 +766,45 @@
   body { background: #fff !important; }
 }
 .pk-reading .pk-futbtn { white-space: nowrap; }
+
+/* ---------- 2026-11-08 UI点検の直し ---------- */
+.pk-problem { margin-top: -6px; font-size: clamp(16px, 2.2vw, 20px); font-weight: 800; color: #9a4312; }
+.pk-jobgo { margin-top: 4px; justify-self: start; padding: 4px 12px; border-radius: 999px; background: var(--lf-accent); color: #fff; font-size: 12.5px; font-weight: 800; }
+.lf-job:hover .pk-jobgo { filter: brightness(1.1); }
+.pk-learn summary, .pk-kartebox summary, .pk-ephead summary, .pk-bookwrap summary { cursor: pointer; list-style: none; }
+.pk-learn summary::-webkit-details-marker, .pk-kartebox summary::-webkit-details-marker, .pk-ephead summary::-webkit-details-marker, .pk-bookwrap summary::-webkit-details-marker, .pk-fitwrap summary::-webkit-details-marker { display: none; }
+.pk-learn summary::after { content: "▼ 場面と出典"; display: inline-block; margin-top: 2px; font-size: 11.5px; font-weight: 700; color: var(--lf-accent); }
+.pk-learn details[open] summary::after { content: "▲ 閉じる"; }
+.pk-assume { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #fbe3cf; color: #9a4312; font-size: 11.5px; font-weight: 800; vertical-align: 2px; }
+.pk-open-hint { display: inline-block; margin-left: 10px; padding: 1px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--lf-accent) 50%, transparent); color: var(--lf-accent); font-size: 11.5px; font-weight: 700; font-family: inherit; letter-spacing: 0; }
+details[open] > summary .pk-open-hint { display: none; }
+.pk-topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 8px 14px; border-radius: var(--lf-radius); background: var(--lf-card); box-shadow: var(--lf-shadow); }
+.pk-topbar-title { font-size: 17px; font-weight: 800; line-height: 1.4; }
+.pk-topbar-title small { margin-right: 8px; font-size: 11px; letter-spacing: 0.12em; color: var(--lf-accent); }
+.pk-years-thin { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; }
+.pk-years-thin-head { font-weight: 800; color: var(--lf-sub); }
+.pk-years-thin button { padding: 3px 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--lf-ink) 22%, transparent); font-weight: 800; background: var(--lf-card); }
+.pk-years-thin button[aria-pressed="true"] { background: var(--lf-accent); border-color: var(--lf-accent); color: #fff; }
+.pk-years-thin-diff { color: var(--lf-sub); }
+.pk-years-thin-diff b { color: var(--lf-ink); }
+.pk-yr.is-thin { padding: 6px 10px 4px; gap: 0; }
+.pk-yr.is-thin .pk-node { grid-template-columns: auto auto; column-gap: 6px; row-gap: 0; padding: 3px 4px; justify-items: start; align-items: center; text-align: left; }
+.pk-yr.is-thin .pk-node-pic { grid-row: span 2; width: 30px; height: 30px; border-width: 2px; font-size: 12px; }
+.pk-yr.is-thin .pk-node-age { font-size: 11.5px; }
+.pk-yr.is-thin .pk-node-sub { font-size: 10px; -webkit-line-clamp: 1; }
+.pk-yr.is-thin .pk-nodes li { flex: 1 0 110px; max-width: 170px; }
+.pk-ephead-sum { font-size: 13px; color: var(--lf-sub); }
+.pk-ephead-sum b { color: var(--lf-ink); font-size: 15px; }
+.pk-ephead[open] .pk-ephead-sum { margin-bottom: 4px; }
+.pk-bookwrap { border-radius: var(--lf-radius); background: var(--lf-card); box-shadow: var(--lf-shadow); }
+.pk-bookwrap > summary { padding: 12px 16px; }
+.pk-bookwrap > summary::after { content: " ▼"; color: var(--lf-accent); font-size: 12px; }
+.pk-bookwrap[open] > summary::after { content: " ▲"; }
+.pk-bookwrap .pk-book { box-shadow: none; border: 0; padding-top: 0; }
+.pk-whybelow { margin-top: -6px; padding: 10px 14px; border-radius: 0 0 var(--lf-radius) var(--lf-radius); background: var(--lf-ink); color: var(--lf-card); font-weight: 700; font-size: 14.5px; line-height: 1.6; animation: pk-in 0.4s both; }
+.pk-fitwrap > summary { display: inline-block; cursor: pointer; list-style: none; }
+.pk-fitwrap[open] > summary { margin-bottom: 12px; }
+.pk-applymsg { padding: 4px 10px; border-radius: 8px; background: #fbe3cf; color: #9a4312; font-size: 12.5px; font-weight: 700; }
+.pk-stagebox, .pk-stagewrap { max-width: 960px; width: 100%; justify-self: center; }
+.pk-life:not(.pk-yr) .pk-node-pic { width: 40px; height: 40px; }
+.pk-life:not(.pk-yr) { padding-top: 8px; gap: 6px; }
