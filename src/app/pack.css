@@ -705,8 +705,10 @@
 .pk-staycol { padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--lf-ink) 4%, var(--lf-card)); }
 .pk-staycol.is-pick { box-shadow: 0 0 0 2px var(--lf-accent); }
 
-.pk-feel-face.is-letter { display: grid; place-items: center; background: color-mix(in srgb, var(--lf-accent) 18%, var(--lf-card)); }
-.pk-feel-face.is-letter b { font-size: 18px; color: var(--lf-accent); }
+.pk-feel-face.is-drawn { display: block; background: transparent; }
+.pk-node.is-forknode { opacity: 1; }
+.pk-node.is-forknode .pk-node-pic { color: #b7791f; border-color: #e9b44c; border-style: solid; background: #fff4dc; font-size: 18px; }
+.pk-node.is-forknode .pk-node-age { color: #8a5a12; }
 
 .pk-node.is-life .pk-node-pic { border-radius: 10px; box-shadow: 0 0 0 2px #e07a9a; }
 .pk-node.is-life.is-set .pk-node-pic { box-shadow: 0 0 0 3px #e07a9a, 0 0 0 6px color-mix(in srgb, #e07a9a 25%, transparent); }

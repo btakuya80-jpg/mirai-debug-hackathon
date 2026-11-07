@@ -9,7 +9,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import InfoWindow, { type HelpItem } from "@/components/InfoWindow";
-import { CompanyExtras, JobBoard, MakeForm, SaveCompare, SimpleBranchView, StatsPanel } from "@/components/life/parts";
+import { CompanyExtras, JobBoard, MakeForm, SaveCompare, SimpleBranchView } from "@/components/life/parts";
 import { karteOf } from "@/lib/karte";
 import { AI_META, AI_NOTE, aiErrorText, jobText, readWithClaude } from "@/lib/ai";
 import { BEATS, BRIDGE, LV_NAME, ROLE_AT_FORK, episodeOfVibe, episodesOf, levelsAt, trunkIdxOf, type Beat, type Episode } from "@/lib/episodes";
@@ -88,8 +88,8 @@ export default function PackApp({ style }: { style: StyleId }) {
     { id: "reviews", step: "karte", sel: '[data-h="reviews"]', name: "自分で読んだ口コミを貼る（任意）", what: "貼った文のどの言葉が、どの場面・できごとに入るかを、まとめと年表と場面に印で出す。自動の読み取りはしない。", why: "口コミの印象を、働く場面で確かめられるようにするため。", src: "チームの案" },
     { id: "look", step: "make", sel: '[data-h="look"]', name: "見た目と表情", what: "試運転する自分の見た目は2種類から選べる。場面のきもちに合わせて、元気・普通・しんどいの3つの表情に変わる。", why: "同じ人物がどの場面でも同じ見た目で出ることで、自分の分身として追いかけやすくする。", src: SRC },
     { id: "episode", step: "life", sel: '[data-h="scene"]', name: "1つの場面（仕事→壁→学び→スキルアップ→その後）", what: "スキルが上がる時は、毎回この5つの段で見せる。どんな仕事で、何につまずき、だれに何を教わったか（自分で何を工夫したか）、Lv がいくつ上がり、そのスキルが後でどう役に立ったか。", why: "「何をやっていて、どのスキルが上がったのか」を、理由の場面ごと分かるようにするため（使った人の感想「間の何かが足りない」への答え）。", src: "依頼（2026-11-06・スキルが上がる理由の場面）" },
-    { id: "yearone", step: "life", sel: '[data-h="yearone"]', name: "入社1年の年表", what: "入社1週間・1か月後・3か月後・半年後・1年後の場面を並べる。3年後・10年後・75歳は「先を見る」を選ぶまで閉じておく。", why: "最初から70〜80歳まで一気に見せると早すぎるため。まず1年をじっくり見せる。", src: "依頼（2026-11-06・時間を飛ばしすぎない）" },
-    { id: "future", step: "life", sel: '[data-h="future"]', name: "先を見る（どこまで見るかを選ぶ）", what: "入社1年を見終わると、3年後（分かれ道）まで・10年後まで・生涯まで、を選べる。選んだ範囲の先は、また選ぶまで出さない。", why: "その先を見るかどうか、どこまで見るかを、利用者が決められるようにするため。", src: "依頼（2026-11-06）" },
+    { id: "yearone", step: "life", sel: '[data-h="yearone"]', name: "入社3年の年表（初期は3年）", what: "入社1週間・1か月後・3か月後・半年後・1年後の場面を並べ、最後に分かれ道（初期は3年後。上で1年・5年に切り替えられる）。10年後・75歳は道を選んだ後で開く。", why: "決定：初期表示は3年（1年＝知った・できる、3年＝任される、5年＝教えられる）。最初から75歳まで一気に見せると早すぎるため。", src: "引き継ぎ・合議の決定（2026-11-06）" },
+    { id: "future", step: "life", sel: '[data-h="future"]', name: "分かれ道へ進む・どこまで見るか", what: "最初の1年の場面を見終わると、選んだ年数（初期3年）の分かれ道へ進む。10年後まで・生涯までも選べる。", why: "その先を見るかどうか、どこまで見るかを、利用者が決められるようにするため。", src: "依頼（2026-11-06）" },
     { id: "growth", step: "life", sel: '[data-h="growth"]', name: "成長のまとめ（ビフォー・アフター）", what: "入社した時といま見ている時点の自分を並べ、専門スキルの Lv の変化（押すとその場面を見返せる）・任される役割の階段・給料の筋書き・この先活きる道を1枚で見せる。", why: "「結局どう成長したのか」をひと目で分かるようにするため。", src: "依頼（2026-11-06・追加7）" },
     { id: "pay", step: "life", sel: '[data-h="pay"]', name: "給料（出典つき）と給料の筋書き", what: "求人原稿の給与だけを出典つきで出す。その後は金額を断定せず「上がりやすい／横ばい／下がることもある／大きく変わる」を理由つきで出す。", why: "働く上で大事な給料を、誤った数字を出さずに見せるため。", src: "依頼（2026-11-06・6）" },
     fam === "g"
@@ -229,7 +229,7 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
       return;
     }
     if (fallback && r.error !== "cancelled") {
-      /* Claude を使えない時は、見本データで続ける（会社まとめの画面に理由を出す） */
+      /* Claude を使えない時は、見本データで続ける（見た目と流れは本番と同じ。「Claude が読んだ」の札だけ出さない） */
       AI_NOTE.text = aiErrorText(r.error);
       s.pickJob(fallback.id);
       s.go("karte");
@@ -250,7 +250,7 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
       <div className="pk-hero" data-h="hero">
         <div className="grid content-center gap-5">
           <PromiseNote />
-          <p className="pk-eyebrow text-[12px]">求人1件から、入社1年とその先を試運転</p>
+          <p className="pk-eyebrow text-[12px]">求人1件から、入社3年とその先を試運転</p>
           <h1 className="lf-h text-[34px] leading-[1.25] sm:text-[48px]">
             <span className="w">応募する前に、</span>
             <br />
@@ -341,8 +341,8 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
             <span className="pk-how-pic">
               <img src={art(c.style, "cut-fork")} alt="" />
             </span>
-            <b>入社1年を、場面で見る</b>
-            <span>仕事→壁→学び→スキルアップ。先は「先を見る」で</span>
+            <b>入社3年を、場面で見る</b>
+            <span>仕事→壁→学び→スキルアップ。3年後に分かれ道</span>
           </li>
         </ol>
       </div>
@@ -371,7 +371,7 @@ function Entry({ c, s }: { c: Ctx; s: LifeState }) {
             </span>
           </div>
           <p className="max-w-[340px] text-[13px] leading-6">
-            将来は、求人サイトの1件ごとに「未来を試走する」ボタンを置き、押すとこの画面で、その求人の会社まとめと人生の筋書きが開く形を考えています。いまは、上の欄に求人URLを貼って試せます。
+            将来は、求人サイトの1件ごとにこのボタンを置き、押すとこの画面が開く形にします。
           </p>
         </div>
       </div>
@@ -402,7 +402,7 @@ function Karte({ c, s }: { c: Ctx; s: LifeState }) {
         </span>
         <div className="grid gap-2">
           <p className="pk-eyebrow text-[12px]">STEP 2　会社のまとめ</p>
-          {AI_META[s.job.id] ? <p className="pk-aibadge is-ai">Claude が求人の本文から読み取りました（読めない所は「不明」のまま）</p> : <p className="pk-aibadge">見本データで表示しています{AI_NOTE.text ? `（${AI_NOTE.text}）` : "（Claude は使っていません）"}</p>}
+          {AI_META[s.job.id] && <p className="pk-aibadge is-ai">Claude が求人の本文から読み取りました（読めない所は「不明」のまま）</p>}
           <h1 className="lf-h text-[26px] leading-tight sm:text-[34px]">
             {s.job.company}は、
             <br className="sm:hidden" />
@@ -423,7 +423,7 @@ function Karte({ c, s }: { c: Ctx; s: LifeState }) {
         <div className="grid content-start gap-5">
           <div className="lf-card p-5" data-h="learn">
             <p className="lf-h text-[18px]">ここで身につく専門知識</p>
-            <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">どの仕事・場面で身につくかと、求人原稿のどこから読み取ったかを並べています。</p>
+            <p className="mt-1 text-[12.5px] text-[var(--lf-sub)]">どの場面で身につくかと、求人原稿の出典。</p>
             <ul className="mt-3 grid gap-3">
               {ks.map((x) => (
                 <li key={x.id} className="pk-learn">
@@ -568,7 +568,7 @@ function LifeView({ c, s: s0 }: { c: Ctx; s: LifeState }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   if (phase === "ep" && eps.length) return <YearOne c={c} s={s} pos={pos} setPos={setPos} onFuture={toFuture} speed={speed} setSpeed={setSpeed} />;
-  return <LaterLife c={c} s={s} horizon={horizon} setHorizon={setHorizon} onYearOne={toYearOne} speed={speed} setSpeed={setSpeed} />;
+  return <LaterLife c={c} s={s} horizon={Math.max(horizon, s0.years)} setHorizon={setHorizon} onYearOne={toYearOne} speed={speed} setSpeed={setSpeed} />;
 }
 
 /* 入社1年：場面を重ねて、じっくり */
@@ -649,14 +649,14 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
     <section className="grid gap-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="pk-eyebrow text-[12px]">STEP 4　入社1年を、場面で見る</p>
+          <p className="pk-eyebrow text-[12px]">STEP 4　入社{s.years}年を、場面で見る</p>
           <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">
-            {s.job.company}で働く、最初の1年
+            {s.job.company}で働く、最初の{s.years}年
           </h1>
-          <p className="mt-1 text-[13px] leading-6 text-[var(--lf-sub)]">スキルが上がる時は、毎回「仕事 → 壁 → 学び → スキルアップ → その後」の順で見せます。自分のペースで進められます。その先は、見終わってから「先を見る」で選べます。</p>
+          <p className="mt-1 text-[13px] leading-6 text-[var(--lf-sub)]">仕事 → 壁 → 学び → スキルアップ → その後。{s.years}年後に分かれ道が来ます。</p>
         </div>
-        <p className="text-[12.5px] text-[var(--lf-sub)]">予測ではなく、シナリオ（筋書き）です。合否・点数・％は出しません。</p>
       </div>
+      <YearsSwitch s={s} />
       <YearOneLine c={c} s={s} pos={pos} onPick={(e) => setPos({ e, beat: 0 })} />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 content-start gap-3">
@@ -694,7 +694,7 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
           {pos.beat === 4 && speed !== "manual" && (
             <AutoNext
               key={`auto-${pos.e}`}
-              label={last ? `${s.years}年後の分かれ道へ（入社1年のまとめは下にあります）` : `次の場面へ：${eps[pos.e + 1].when}「${eps[pos.e + 1].title}」`}
+              label={last ? `${s.years}年後の分かれ道へ` : `次の場面へ：${eps[pos.e + 1].when}「${eps[pos.e + 1].title}」`}
               ms={last ? NEXT_MS[speed] + 6000 : NEXT_MS[speed]}
               onGo={() => (last ? onFuture(s.years) : goBeat(5))}
               onStop={() => setSpeed("manual")}
@@ -717,12 +717,6 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
               {!pay.raise && <span className="text-[var(--lf-sub)]">（求人原稿に書いていません）</span>}
             </p>
           </div>
-          <details className="pk-more">
-            <summary className="lf-h cursor-pointer text-[14px]">8つの力と暮らし（高・中・低）</summary>
-            <div className="mt-3">
-              <StatsPanel job={s.job} ch={ch} prev={prevCh} />
-            </div>
-          </details>
         </aside>
       </div>
     </section>
@@ -1038,7 +1032,7 @@ function SkillRoads({ s, gained, lv, title }: { s: LifeState; gained: { k: Know;
         </ul>
       </div>
       <p className="mt-2 text-[11.5px] leading-5 text-[var(--lf-sub)]">
-        <span className="pk-skr-key is-good" />太い線＝この道で活きる　<span className="pk-skr-key is-some" />点線＝少し活きる　色の濃い線が、この場面で手に入れたスキルです。道の判定は筋書きで、点数ではありません。
+        <span className="pk-skr-key is-good" />太い線＝活きる　<span className="pk-skr-key is-some" />点線＝少し活きる
       </p>
     </div>
   );
@@ -1051,16 +1045,14 @@ function FutureCard({ s, done, onFuture }: { s: LifeState; done: boolean; onFutu
     <div className={`pk-future ${done ? "is-open" : ""}`} data-h="future">
       {done ? (
         <>
-          <p className="pk-eyebrow text-[12px]">入社1年、おつかれさまでした</p>
-          <p className="lf-h text-[20px] sm:text-[23px]">この先を見る</p>
-          <p className="mt-1 text-[13.5px]">まず、<b>分かれ道が来る時点</b>を選びます（初期は3年）。そのあと、どこまで先を見るかを選べます。</p>
+          <p className="pk-eyebrow text-[12px]">最初の1年の場面を見終わりました</p>
+          <p className="lf-h text-[20px] sm:text-[23px]">{s.years}年後の分かれ道へ</p>
         </>
       ) : (
         <p className="text-[13px] text-[var(--lf-sub)]">
-          <b className="text-[var(--lf-ink)]">先を見る</b>：入社1年の場面（{eps.length}つ）を見終わると、分かれ道（1年・3年・5年から選べる）とその先の筋書きへ進めます。
+          <b className="text-[var(--lf-ink)]">先を見る</b>：場面（{eps.length}つ）を見終わると、{s.years}年後の分かれ道へ進みます。
         </p>
       )}
-      <YearsSwitch s={s} compact={!done} />
       <div className="mt-2 flex flex-wrap gap-2">
         <button type="button" className={done ? "lf-btn px-5 py-3 text-[15px]" : "pk-futbtn px-4 py-2.5 text-[13.5px]"} onClick={() => onFuture(s.years)}>
           {s.years}年後の分かれ道を見る ▶
@@ -1071,7 +1063,6 @@ function FutureCard({ s, done, onFuture }: { s: LifeState; done: boolean; onFutu
           </button>
         ))}
       </div>
-      {!done && <p className="mt-1 text-[11.5px] text-[var(--lf-sub)]">1年目の途中でも進めますが、場面を順に見るのがおすすめです。</p>}
     </div>
   );
 }
@@ -1086,7 +1077,7 @@ function YearsSwitch({ s, compact }: { s: LifeState; compact?: boolean }) {
   };
   return (
     <div className={`pk-years ${compact ? "is-compact" : ""}`} data-h="years">
-      <p className="pk-years-head">分かれ道が来る時点</p>
+      <p className="pk-years-head">分かれ道が来る時点（初期は3年）</p>
       <div className="pk-years-row" role="group" aria-label="分かれ道が来る時点">
         {([1, 3, 5] as Years[]).map((y) => (
           <button key={y} type="button" aria-pressed={s.years === y} onClick={() => s.setYears(y)}>
@@ -1097,7 +1088,7 @@ function YearsSwitch({ s, compact }: { s: LifeState; compact?: boolean }) {
       </div>
       {!compact && (
         <p className="pk-years-diff">
-          この会社のこの仕事では、{s.years}年後に「{s.years === 5 ? "教えられる" : s.years === 3 ? "任される" : "できる"}」まで育つ専門知識は <b>{top(s.years)}つ</b>（{s.job.company}・{s.job.title}の筋書き。年数だけで一律には上げていません）
+          {s.years}年後に「{s.years === 5 ? "教えられる" : s.years === 3 ? "任される" : "できる"}」まで育つ専門知識：<b>{top(s.years)}つ</b>
         </p>
       )}
     </div>
@@ -1315,9 +1306,9 @@ function YearOneLine({ c, s, pos, onPick }: { c: Ctx; s: LifeState; pos: { e: nu
   return (
     <div className={`pk-life pk-yr ${c.fam === "h" ? "is-road" : ""}`} data-h="yearone">
       <p className="pk-yr-head">
-        <b>入社1年</b>　{s.profile.age}歳 → {s.profile.age + 1}歳　場面を押すと、その場面から見られます
+        <b>入社{s.years}年</b>　{s.profile.age}歳 → {s.profile.age + s.years}歳
       </p>
-      <ol className="pk-nodes" aria-label="入社1年の場面">
+      <ol className="pk-nodes" aria-label="入社からの場面">
         {eps.map((ep, i) => {
           const k = knowOf(s.job).find((x) => x.id === ep.up.know)!;
           const seen = i < pos.e || (i === pos.e && pos.beat >= 3);
@@ -1336,12 +1327,19 @@ function YearOneLine({ c, s, pos, onPick }: { c: Ctx; s: LifeState; pos: { e: nu
             </li>
           );
         })}
-        {["3年後", "10年後", `${END_AGE}歳`].map((g) => (
+        <li>
+          <span className="pk-node is-ghost is-forknode">
+            <span className="pk-node-pic">◆</span>
+            <span className="pk-node-age">{s.years}年後</span>
+            <span className="pk-node-sub">分かれ道（道を選ぶ）</span>
+          </span>
+        </li>
+        {["10年後", `${END_AGE}歳`].map((g) => (
           <li key={g}>
             <span className="pk-node is-ghost">
               <span className="pk-node-pic">?</span>
               <span className="pk-node-age">{g}</span>
-              <span className="pk-node-sub">「先を見る」で開く</span>
+              <span className="pk-node-sub">道を選んだ後で開く</span>
             </span>
           </li>
         ))}
@@ -1377,6 +1375,28 @@ function feelName(s: LifeState, w: FeelWho) {
   if (w === "boss" || w === "senpai" || w === "peer") return `${nameOf(s.job, w)}（${s.job.people[w].role}）`;
   return nameOf(s.job, w);
 }
+/** 顔の絵がない人（現地の仲間・教え子・家族）は、表情だけの顔を描く（気持ちに合わせて口と眉が変わる） */
+function DrawnFace({ lv, who }: { lv: 0 | 1 | 2; who: FeelWho }) {
+  const skin = who === "student" ? "#f6d7b8" : who === "local" ? "#d9a77c" : "#efc9a4";
+  const hair = who === "student" ? "#3b2a20" : who === "local" ? "#1f1a17" : "#5a3b28";
+  const mouth = lv === 2 ? "M15 27 Q20 32 25 27" : lv === 1 ? "M15.5 28 Q20 30 24.5 28" : "M15 30 Q20 26.5 25 30";
+  const brow = lv === 0 ? ["M12 15.5 L17 14", "M23 14 L28 15.5"] : ["M12 14.5 Q14.5 13 17 14.5", "M23 14.5 Q25.5 13 28 14.5"];
+  return (
+    <svg viewBox="0 0 40 40" width="100%" height="100%" aria-hidden>
+      <circle cx="20" cy="20" r="19" fill="#fff6ea" />
+      <circle cx="20" cy="22" r="13" fill={skin} />
+      <path d={who === "student" ? "M7 20 Q8 6 20 6 Q32 6 33 20 Q29 12 20 12 Q11 12 7 20Z" : "M8 19 Q9 7 20 7 Q31 7 32 19 Q26 13 20 13 Q13 13 8 19Z"} fill={hair} />
+      {brow.map((d) => (
+        <path key={d} d={d} stroke={hair} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+      ))}
+      <circle cx="15" cy="20" r="1.6" fill="#2b2420" />
+      <circle cx="25" cy="20" r="1.6" fill="#2b2420" />
+      {lv === 2 && <circle cx="12.5" cy="25" r="2" fill="#f2a08d" opacity=".6" />}
+      {lv === 2 && <circle cx="27.5" cy="25" r="2" fill="#f2a08d" opacity=".6" />}
+      <path d={mouth} stroke="#7a3b2a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
 function FeelBox({ c, s, feels, partner, title = "この場面の人たちの気持ち" }: { c: Ctx; s: LifeState; feels: Feel[]; partner?: "m" | "f"; title?: string }) {
   const pt = partner ?? (c.look === "m" ? "f" : "m");
   return (
@@ -1388,7 +1408,7 @@ function FeelBox({ c, s, feels, partner, title = "この場面の人たちの気
           const pic = feelArt(c, f.who, pt);
           return (
             <li key={f.who} className="pk-feel">
-              <span className={`pk-feel-face ${pic ? "" : "is-letter"}`}>{pic ? <img src={pic} alt="" /> : <b>{feelName(s, f.who).slice(0, 1)}</b>}</span>
+              <span className={`pk-feel-face ${pic ? "" : "is-drawn"}`}>{pic ? <img src={pic} alt="" /> : <DrawnFace lv={f.lv} who={f.who} />}</span>
               <span className="grid gap-0.5">
                 <b className="text-[13px]">{feelName(s, f.who)}</b>
                 <span className={`pk-gauge lv-${f.lv}`} role="img" aria-label={FEEL_WORD[f.lv]}>
@@ -1403,7 +1423,7 @@ function FeelBox({ c, s, feels, partner, title = "この場面の人たちの気
           );
         })}
       </ul>
-      <p className="mt-2 text-[11px] leading-5 text-[var(--lf-sub)]">場面に出てきた仮想の人物の気持ちの筋書きです。実在の人の気持ちを推しはかるものではなく、点数でもありません。</p>
+      <p className="mt-2 text-[11px] leading-5 text-[var(--lf-sub)]">仮想の人物の気持ちの筋書きです。</p>
     </div>
   );
 }
@@ -1476,7 +1496,7 @@ function LifeEvents({ c, s, life, setLife, partner, setPartner }: { c: Ctx; s: L
   return (
     <div className="lf-card p-5" data-h="lifeev" id="lifeev">
       <p className="lf-h text-[17px]">人生の出来事のマス</p>
-      <p className="mt-1 text-[12.5px] leading-6 text-[var(--lf-sub)]">仕事の筋書きの流れの中で、出来事を1つずつ選びます。どれを選んでもかまいません。選ぶと、仕事・給料・働き方への影響をひとことで出します。</p>
+      <p className="mt-1 text-[12.5px] leading-6 text-[var(--lf-sub)]">出来事を1つずつ選ぶと、仕事・働き方への影響をひとことで出します。</p>
       <ol className="mt-3 grid gap-3">
         {open.map((st) => (
           <li key={st.key} className="pk-lifestep">
@@ -1521,8 +1541,7 @@ function ForkCall({ s, auto }: { s: LifeState; auto: boolean }) {
       <p className="pk-forkcall-eyebrow">◆ 分かれ道　入社{s.years}年後</p>
       <p className="lf-h pk-forkcall-title">ここで、道を選んでください</p>
       <p className="pk-forkcall-sub">
-        {auto ? "自動で進めていても、ここでは止まって、あなたが選ぶのを待っています。" : "ここから先は、あなたが選んだ道の筋書きになります。"}
-        身についた専門知識が、6本の道でどう活きるかを見て、1本を選んでください。あとで戻って選び直せます。
+        身についた専門知識が6本の道でどう活きるかを見て、1本選んでください。
       </p>
       <button type="button" className="lf-btn pk-forkcall-btn" onClick={() => document.querySelector('[data-h="branches"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}>
         6本の道を見て選ぶ ▼
@@ -1630,7 +1649,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
         <p className="pk-eyebrow text-[12px]">STEP 6　持ち帰る</p>
         <h1 className="lf-h mt-1 text-[24px] leading-tight sm:text-[30px]">応募するかを、自分で決めるための材料</h1>
         <p className="mt-2 text-[14px] leading-7">
-          {s.job.company}「{s.job.title}」　<span className={`pk-aibadge ${ai ? "is-ai" : ""}`}>{ai ? "Claude が求人の本文から書きました" : "見本の求人（架空）で表示しています"}</span>
+          {s.job.company}「{s.job.title}」　{ai && <span className="pk-aibadge is-ai">Claude が求人の本文から書きました</span>}
         </p>
       </div>
 
@@ -1664,7 +1683,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
 
         <div className="lf-card p-5" data-h="take-roads">
           <p className="lf-h text-[17px]">② そのスキルで開ける道</p>
-          <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">活きるスキルが多い道ほど太く描いています（点数ではありません）</p>
+          <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">活きるスキルが多い道ほど太く描いています</p>
           <ul className="mt-3 grid gap-2">
             {BRANCHES.map((b, i) => {
               const k = band(ws[i]);
@@ -1840,15 +1859,13 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
             {s.job.company}で働く、{horizon >= 99 ? `${END_AGE}歳まで` : `${horizon}年後まで`}
           </h1>
           <p className="mt-1 text-[13px] text-[var(--lf-sub)]">
-            いま見ている範囲：入社から{horizon >= 99 ? `生涯（${END_AGE}歳）` : `${horizon}年後`}まで。
             {eps.length > 0 && (
               <button type="button" className="pk-link" onClick={() => onYearOne(eps.length - 1)}>
-                入社1年の場面に戻る
+                最初の1年の場面に戻る
               </button>
             )}
           </p>
         </div>
-        <p className="text-[12.5px] text-[var(--lf-sub)]">予測ではなく、シナリオ（筋書き）です。合否・点数・％は出しません。</p>
       </div>
       <YearsSwitch s={s} />
       {c.fam === "g" ? <LifeLine c={c} s={s} horizon={horizon} onYearOne={onYearOne} life={life} /> : <RoadMap c={c} s={s} horizon={horizon} onYearOne={onYearOne} />}
@@ -1958,12 +1975,6 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
         <aside className="grid content-start gap-4">
           <KnowBook c={c} s={s} />
           <FeelBox c={c} s={s} feels={feelsOfChapter(s, ch)} />
-          <details className="pk-more">
-            <summary className="lf-h cursor-pointer text-[14px]">8つの力と暮らし（高・中・低）</summary>
-            <div className="mt-3">
-              <StatsPanel job={s.job} ch={ch} prev={s.prev} />
-            </div>
-          </details>
         </aside>
       </div>
     </section>
@@ -2055,7 +2066,7 @@ function KnowBook({ c, s, lv, justUp, upTo = 0, upBeat = 0 }: { c: Ctx; s: LifeS
           );
         })}
       </ul>
-      <p className="mt-2 text-[11px] leading-5 text-[var(--lf-sub)]">Lv は段の名前（1 知った・2 できる・3 任される・4 教えられる）です。点数ではありません。</p>
+      <p className="mt-2 text-[11px] leading-5 text-[var(--lf-sub)]">Lv は段の名前です（点数ではありません）。</p>
     </div>
   );
 }
@@ -2070,7 +2081,7 @@ function ForkDeal({ c, s }: { c: Ctx; s: LifeState }) {
         <div>
           <p className="pk-eyebrow text-[12px]">分かれ道　{ageAt(s.chapter, s.profile.age)}歳</p>
           <p className="lf-h text-[20px] sm:text-[24px]">いま持っている専門知識は、どの道で活きる？</p>
-          <p className="mt-1 text-[12.5px]">◎活きる　△少し活きる　−活きない（筋書きの中での使われ方です。点数ではありません）</p>
+          <p className="mt-1 text-[12.5px]">◎活きる　△少し活きる　−活きない</p>
         </div>
       </div>
       <div className="pk-roads">
@@ -2240,7 +2251,7 @@ function LifeLine({ c, s, horizon = 99, onYearOne, life }: { c: Ctx; s: LifeStat
               <span className="pk-node-pic">
                 <img src={art(c.style, PLACE_ART[s.job.place])} alt="" loading="lazy" />
               </span>
-              <span className="pk-node-age">入社1年</span>
+              <span className="pk-node-age">最初の1年</span>
               <span className="pk-node-sub">場面{eps.length}つ（見た）</span>
             </button>
           </li>
@@ -2335,7 +2346,7 @@ function RoadMap({ c, s, compare, horizon = 99, onYearOne }: { c: Ctx; s: LifeSt
             disabled={compare || (i > s.idx && !(onYearOne && i < s.forkIdx))}
             aria-current={!compare && i === s.idx}
             onClick={() => (onYearOne && i < s.forkIdx ? onYearOne(i === 0 ? 0 : i === 1 ? 1 : eps.length - 1) : s.jump(i))}
-            title={onYearOne && i < s.forkIdx ? "入社1年の場面に戻る" : undefined}
+            title={onYearOne && i < s.forkIdx ? "最初の1年の場面に戻る" : undefined}
             className={`pk-stop ${ch.fork ? "is-fork" : ""}`}
             style={{ left: `${TRUNK_X[i]}%`, top: `${FORK.y}%` }}
           >
