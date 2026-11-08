@@ -78,9 +78,9 @@ export function whoArt(who: Who, look: Look, mood: Mood): PackKey | null {
 
 /** 人生のできごとの文から、合う絵を選ぶ */
 export function eventArt(text: string): PackKey {
-  if (/海外|国/.test(text)) return "ev-overseas";
-  if (/独立|店を|開業/.test(text)) return "ev-independent";
-  if (/学|教|資格|学校/.test(text)) return "ev-relearn";
-  if (/家を|住まい|引っ越|建てる/.test(text)) return "ev-home";
+  if (["海外", "国"].some((w) => text.includes(w))) return "ev-overseas";
+  if (["独立", "店を", "開業"].some((w) => text.includes(w))) return "ev-independent";
+  if (["学", "教", "資格", "学校"].some((w) => text.includes(w))) return "ev-relearn";
+  if (["家を", "住まい", "引っ越", "建てる"].some((w) => text.includes(w))) return "ev-home";
   return "ev-family";
 }

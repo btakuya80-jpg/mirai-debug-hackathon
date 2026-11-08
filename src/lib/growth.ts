@@ -21,15 +21,15 @@ const LV: Record<Level, number> = { 低: 0, 中: 1, 高: 2 };
 /** 前の場面と比べた給料の筋書き（お金のゆとり 高・中・低 の変化と、その場面の出来事から） */
 export function payTrendOf(prev: Chapter | undefined, ch: Chapter): { trend: PayTrend; why: string } {
   const ev = ch.events.join("");
-  const why = /班長|リーダー|任され|副店長|店長|工場長|責任者|補佐/.test(ev)
+  const why = ["班長", "リーダー", "任され", "副店長", "店長", "工場長", "責任者", "補佐"].some((w) => ev.includes(w))
     ? "役割がついた"
-    : /資格|免許/.test(ev)
+    : ["資格", "免許"].some((w) => ev.includes(w))
       ? "資格・免許の手当"
-      : /独立/.test(ev)
+      : ["独立"].some((w) => ev.includes(w))
         ? "独立して収入の形が変わる"
-        : /日勤|介護|子ども|行き来/.test(ev)
+        : ["日勤", "介護", "子ども", "行き来"].some((w) => ev.includes(w))
           ? "働き方を変えた"
-          : /定年|教える/.test(ev)
+          : ["定年", "教える"].some((w) => ev.includes(w))
             ? "定年後の働き方"
             : "大きな変化なし";
   if (!prev) return { trend: "横ばい", why };
@@ -40,7 +40,7 @@ export function payTrendOf(prev: Chapter | undefined, ch: Chapter): { trend: Pay
 
 /** 求人原稿の給与（出典つき）と、昇給の書き方 */
 export function payOfJob(job: Job) {
-  const raise = job.body.find((b) => /昇給|賞与|手当/.test(b)) ?? null;
+  const raise = job.body.find((b) => ["昇給", "賞与", "手当"].some((w) => b.includes(w))) ?? null;
   return { pay: job.pay, src: "求人原稿（給与の欄）", raise };
 }
 

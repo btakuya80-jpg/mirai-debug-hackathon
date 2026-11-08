@@ -833,3 +833,40 @@ details[open] > summary .pk-open-hint { display: none; }
 .pk-stagestrip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pk-stagestrip li { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
 .pk-stagestrip li.is-gain { background: var(--pk-hi); color: #2e2420; font-weight: 800; animation: pk-chip 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+
+/* ---------- 2026-11-08 スキル → 進める道（線の図をやめてカードに）・人生の出来事も絵の上で選ぶ ---------- */
+.pk-skr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pk-skr-chips button { padding: 4px 12px; border-radius: 999px; background: var(--pk-hi); color: #2e2420; font-size: 13px; font-weight: 800; border: 2px solid transparent; }
+.pk-skr-chips button[aria-pressed="true"] { border-color: var(--lf-ink); }
+.pk-skr-chips small { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: #fbe3cf; color: #9a4312; font-size: 10.5px; }
+.pk-skr-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.pk-skr-card { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px; border-radius: 12px; background: var(--lf-bg); border: 1.5px solid color-mix(in srgb, var(--lf-ink) 12%, transparent); transition: opacity 0.2s, box-shadow 0.2s, border-color 0.2s; }
+.pk-skr-card > img { width: 64px; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.pk-skr-card.is-top { grid-column: span 2; grid-row: span 2; align-content: center; grid-template-columns: 150px minmax(0, 1fr); border-color: var(--lf-accent); background: color-mix(in srgb, var(--lf-accent) 7%, var(--lf-card)); box-shadow: 0 3px 0 color-mix(in srgb, var(--lf-accent) 40%, transparent); }
+.pk-skr-card.is-top > img { width: 150px; }
+.pk-skr-card.is-top .pk-skr-name b { font-size: 19px; }
+.pk-skr-card.is-dim { opacity: 0.35; }
+.pk-skr-card.is-lit { border-color: #e9a020; box-shadow: 0 0 0 3px rgba(233, 160, 32, 0.35); }
+.pk-skr-body { display: grid; gap: 4px; min-width: 0; }
+.pk-skr-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pk-skr-name b { font-size: 15.5px; }
+.pk-skr-name span { font-size: 11.5px; font-weight: 800; color: var(--lf-sub); }
+.pk-skr-band { display: block; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--lf-ink) 12%, transparent); position: relative; overflow: hidden; }
+.pk-skr-band::after { content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%; width: 100%; border-radius: 999px; background: #1f8a5b; }
+.tier-0 .pk-skr-band { height: 14px; background: none; } .tier-0 .pk-skr-band::after { height: 14px; }
+.tier-1 .pk-skr-band { height: 8px; background: none; } .tier-1 .pk-skr-band::after { height: 8px; background: #5fae86; }
+.tier-2 .pk-skr-band { height: 3px; background: none; } .tier-2 .pk-skr-band::after { height: 3px; background: #a9cdb9; }
+.pk-skr-lbl { font-size: 10.5px; color: var(--lf-sub); }
+.pk-skr-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.pk-skr-tags li { padding: 1px 8px; border-radius: 999px; background: #dff0e6; color: #1b6b45; font-size: 11.5px; font-weight: 700; }
+.pk-skr-tags li.is-some { background: #eef0ec; color: #5b6b62; }
+.pk-skr-tags li.is-new { outline: 2px solid #e9a020; }
+.pk-skr-tags li.is-none { background: none; color: var(--lf-sub); font-weight: 400; padding: 0; }
+@media (max-width: 760px) { .pk-skr-cards { grid-template-columns: minmax(0, 1fr); } .pk-skr-card.is-top { grid-column: auto; grid-row: auto; grid-template-columns: 80px minmax(0, 1fr); } .pk-skr-card.is-top > img { width: 80px; } }
+.pk-forkpick-list.n-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 72cqi; justify-self: center; width: 100%; }
+.pk-forkpick-list.n-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pk-forkpick.is-life .pk-forkpick-head { background: #f6c1cf; }
+.pk-forkpick.is-life .pk-forkpick-list button { grid-template-columns: 30% minmax(0, 1fr); align-items: start; }
+.pk-forkpick-list img.is-person { aspect-ratio: 3 / 4; object-fit: contain; object-position: bottom; background: #f4ece2; }
+.pk-forkpick.is-life .pk-forkpick-txt small { -webkit-line-clamp: 4; }
+.pk-stagebox:has(.pk-forkpick.is-life) .pk-forkflag { display: none; }

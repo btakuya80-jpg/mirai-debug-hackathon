@@ -7,7 +7,7 @@
    見せ場は「分かれ道で、身につけた知識が6本の道に配られる瞬間」。 */
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import InfoWindow, { type HelpItem } from "@/components/InfoWindow";
 import { CompanyExtras, JobBoard, MakeForm, SaveCompare, SimpleBranchView } from "@/components/life/parts";
 import { karteOf } from "@/lib/karte";
@@ -551,7 +551,7 @@ const HORIZONS = [
 /** 「3年後（25歳）」。見出しがもう年齢の時は、年齢を重ねて書かない */
 const withAge = (ch: Chapter, start: number) => {
   const l = chapterLabel(ch, start);
-  return /歳$/.test(l) ? l : `${l}（${ageAt(ch, start)}歳）`;
+  return l.endsWith("歳") ? l : `${l}（${ageAt(ch, start)}歳）`;
 };
 const yearsOf = (ch: Chapter) => (ch.at === "end" ? 999 : ch.at);
 
@@ -711,7 +711,7 @@ function YearOne({ c, s, pos, setPos, onFuture, speed, setSpeed }: { c: Ctx; s: 
               ))}
             </ul>
           </details>
-          {pos.beat >= 3 && <SkillRoads s={s} gained={[{ k, from: ep.up.from, to: ep.up.to }]} lv={lv} title={`この場面で手に入れたスキル（${ep.when}）`} />}
+          {pos.beat >= 3 && <SkillRoads c={c} s={s} gained={[{ k, from: ep.up.from, to: ep.up.to }]} lv={lv} title={`この場面で手に入れたスキル（${ep.when}）`} />}
           <StoryCard s={s} ep={ep} k={k} beat={pos.beat} last={last} next={eps[pos.e + 1]} onBeat={goBeat} />
           {done && <GrowthCard c={c} s={s} mode={{ kind: "ep", e: pos.e, beat: pos.beat }} onReplay={(e) => setPos({ e, beat: 0 })} onFuture={onFuture} />}
           <FutureCard s={s} done={done} onFuture={onFuture} />
@@ -987,60 +987,74 @@ function StoryCard({ s, ep, k, beat, last, next, onBeat }: { s: LifeState; ep: E
 }
 
 /** 場面で手に入れたスキルと、そのスキルで進める道（6本）を線でつなぐ。太い線＝活きる、点線＝少し活きる */
-function SkillRoads({ s, gained, lv, title }: { s: LifeState; gained: { k: Know; from: number; to: number }[]; lv: Record<string, number>; title: string }) {
+const FIT_PT: Record<string, number> = { 活きる: 2, 少し活きる: 1, 活きない: 0 };
+/** 道ごとの太さ：持っているスキルの「活きる・少し活きる」を、段（Lv）と、この場面で上がった物を重くして足す。6本を比べて、上から2本＝太い、次の2本＝ふつう、残り＝細い */
+function roadRank(s: LifeState, lv: Record<string, number>, gainedIds: Set<string>) {
+  const ks = knowOf(s.job).filter((k) => (lv[k.id] ?? 0) > 0 || gainedIds.has(k.id));
+  const rows = BRANCHES.map((b, order) => {
+    const fit = ks
+      .map((k) => ({ k, f: k.fits[b.id].fit, w: FIT_PT[k.fits[b.id].fit] * (1 + (lv[k.id] ?? 1) * 0.25) * (gainedIds.has(k.id) ? 1.6 : 1) }))
+      .filter((x) => x.f !== "活きない")
+      .sort((a, z) => z.w - a.w);
+    const later = knowOf(s.job).reduce((n, k) => n + FIT_PT[k.fits[b.id].fit], 0);
+    /* 今のスキルの重みが同じ道は、この先に身につくスキルも含めた見込み（later）で差をつける */
+    const now = fit.reduce((n, x) => n + x.w, 0);
+    return { b, order, score: now === 0 ? 0 : Math.round((now + later * 0.15) * 100) / 100, later, skills: fit.slice(0, 3) };
+  }).sort((a, z) => z.score - a.score || z.later - a.later || a.order - z.order);
+  /* 太さは6本を比べた順番で決める（上の2本＝太い、次の2本＝ふつう、残り＝細い）。同じ重みの道は同じ太さにそろえる。点数・％は画面に出さない */
+  return rows.map((r) => {
+    const i = rows.findIndex((x) => x.score === r.score);
+    return { ...r, tier: (r.score === 0 ? 2 : i < 2 ? 0 : i < 4 ? 1 : 2) as 0 | 1 | 2 };
+  });
+}
+const TIER_NAME = ["太い道", "ふつうの道", "細い道"] as const;
+function SkillRoads({ c, s, gained, lv, title }: { c: Ctx; s: LifeState; gained: { k: Know; from: number; to: number }[]; lv: Record<string, number>; title: string }) {
   const gid = new Set(gained.map((g) => g.k.id));
-  const owned = knowOf(s.job).filter((k) => !gid.has(k.id) && (lv[k.id] ?? 0) > 0);
-  const rows = [...gained.map((g) => ({ k: g.k, g })), ...owned.map((k) => ({ k, g: null as null | (typeof gained)[number] }))].slice(0, 6);
-  const H = 264;
-  const rl = H / rows.length;
-  const rr = H / BRANCHES.length;
-  const best = (b: BranchId) => (gained.some((g) => g.k.fits[b].fit === "活きる") ? "活きる" : gained.some((g) => g.k.fits[b].fit === "少し活きる") ? "少し活きる" : null);
+  const lvNow = { ...lv, ...Object.fromEntries(gained.map((g) => [g.k.id, Math.max(lv[g.k.id] ?? 0, g.to)])) };
+  const rows = roadRank(s, lvNow, gid);
+  const [pick, setPick] = useState<string | null>(null);
   return (
     <div className="lf-card pk-skroads p-4 sm:p-5" data-h="skillroads">
       <p className="pk-eyebrow text-[12px]">{title}</p>
-      <p className="lf-h text-[17px] sm:text-[19px]">
-        {gained.map((g) => `${g.k.name} Lv.${g.from}→Lv.${g.to}`).join("・")}　で、進める道
-      </p>
-      <div className="pk-skr" style={{ height: H }}>
-        <ul className="pk-skr-left" style={{ height: H }}>
-          {rows.map(({ k, g }) => (
-            <li key={k.id} style={{ height: rl }} className={g ? "is-new" : ""}>
-              <span>
-                {g && <em>NEW</em>}
-                <b>{k.name}</b>
-                <small>Lv.{g ? g.to : (lv[k.id] ?? 0)}{k.assumed ? "・仮定" : ""}</small>
-              </span>
+      <p className="lf-h text-[18px] sm:text-[20px]">手に入れたスキルで、進める道</p>
+      <ul className="pk-skr-chips" aria-label="この場面で上がったスキル（押すと、活きる道が光ります）">
+        {gained.map((g) => (
+          <li key={g.k.id}>
+            <button type="button" aria-pressed={pick === g.k.id} onClick={() => setPick(pick === g.k.id ? null : g.k.id)}>
+              {g.k.name} <b>Lv.{g.to}</b> ↑{g.k.assumed ? <small>仮定</small> : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <ul className="pk-skr-cards">
+        {rows.map((r, i) => {
+          const lit = pick ? r.b && knowOf(s.job).find((k) => k.id === pick)?.fits[r.b.id].fit === "活きる" : false;
+          return (
+            <li key={r.b.id} className={`pk-skr-card tier-${r.tier} ${i === 0 ? "is-top" : ""} ${pick ? (lit ? "is-lit" : "is-dim") : ""}`}>
+              <img src={art(c.style, destArt(s.job, r.b.id, s.profile.age))} alt="" />
+              <div className="pk-skr-body">
+                <p className="pk-skr-name">
+                  <b>{r.b.label}</b>
+                  <span>{TIER_NAME[r.tier]}</span>
+                </p>
+                <span className="pk-skr-band" aria-hidden />
+                <p className="pk-skr-lbl">この道で活きるスキル</p>
+                <ul className="pk-skr-tags">
+                  {r.skills.length ? (
+                    r.skills.map((x) => (
+                      <li key={x.k.id} className={`${x.f === "活きる" ? "" : "is-some"} ${gid.has(x.k.id) ? "is-new" : ""}`}>
+                        {x.k.name}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="is-none">まだつながるスキルがない</li>
+                  )}
+                </ul>
+              </div>
             </li>
-          ))}
-        </ul>
-        <svg className="pk-skr-lines" style={{ height: H }} height={H} viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" aria-hidden>
-          {rows.map(({ k, g }, i) =>
-            BRANCHES.map((b, j) => {
-              const f = k.fits[b.id].fit;
-              if (f === "活きない") return null;
-              const y1 = i * rl + rl / 2;
-              const y2 = j * rr + rr / 2;
-              return <path key={`${k.id}-${b.id}`} d={`M0 ${y1} C 50 ${y1}, 50 ${y2}, 96 ${y2}`} className={`${g ? "is-new" : "is-old"} ${f === "活きる" ? "is-good" : "is-some"}`} vectorEffect="non-scaling-stroke" />;
-            }),
-          )}
-        </svg>
-        <ul className="pk-skr-right" style={{ height: H }}>
-          {BRANCHES.map((b) => {
-            const f = best(b.id);
-            return (
-              <li key={b.id} style={{ height: rr }} className={f === "活きる" ? "is-good" : f ? "is-some" : ""}>
-                <span>
-                  <b>{b.label}</b>
-                  <small>{f === "活きる" ? "◎ 活きる" : f ? "△ 少し活きる" : "− まだつながらない"}</small>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-      <p className="mt-2 text-[11.5px] leading-5 text-[var(--lf-sub)]">
-        <span className="pk-skr-key is-good" />太い線＝活きる　<span className="pk-skr-key is-some" />点線＝少し活きる
-      </p>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -1481,7 +1495,7 @@ const LIFE_STEPS: { key: keyof LifeChoice; label: string; when: number; options:
   { key: "family", label: "家族", when: 8, options: ["子どもを迎える", "ふたりで暮らす", "ひとりで暮らす"], needs: (c) => !!c.marry },
 ];
 function lifeImpact(job: Job, key: keyof LifeChoice, v: string): string {
-  const shift = /交替|夜勤|シフト/.test(job.hours);
+  const shift = ["交替", "夜勤", "シフト"].some((w) => job.hours.includes(w));
   switch (`${key}:${v}`) {
     case "meet:趣味の集まりで出会う":
     case "meet:友人の紹介で出会う":
@@ -1506,6 +1520,39 @@ function lifeImpact(job: Job, key: keyof LifeChoice, v: string): string {
       return "自分のペースで、学び直しや資格に時間を使える";
   }
   return "";
+}
+/** いま選ぶ人生の出来事（その歳に来ていて、まだ選んでいないもの）。分かれ道の後だけ */
+function lifePending(s: LifeState, life: LifeChoice): (typeof LIFE_STEPS)[number] | null {
+  if (!s.branch) return null;
+  /* 作り込みのない道は場面が分かれ道で止まるので、出来事を順に選ぶ */
+  const age = s.detail ? ageAt(s.chapter, s.profile.age) : END_AGE;
+  const open = LIFE_STEPS.filter((st, i) => (i === 0 || life[LIFE_STEPS[i - 1].key] || (st.key === "marry" && life.meet)) && (!st.needs || st.needs(life)));
+  return open.find((st) => !life[st.key] && s.profile.age + st.when <= age) ?? null;
+}
+/** 人生の出来事：分かれ道と同じく、場面の絵の上に選ぶカードを重ねる（自動で進めていても止まって待つ） */
+function LifePick({ c, s, st, life, setLife, partner }: { c: Ctx; s: LifeState; st: (typeof LIFE_STEPS)[number]; life: LifeChoice; setLife: (l: LifeChoice) => void; partner: "m" | "f" }) {
+  const solo = (o: string) => ["いまは仕事に集中する", "友人のまま", "結婚しない", "ひとりで暮らす"].includes(o);
+  const pic = (o: string) => (solo(o) || o === "まだ決めない" ? art(c.style, meArt(c.look, "元気")) : art(c.style, partner === "m" ? "partner-m" : "partner-f"));
+  return (
+    <div className="pk-forkpick is-life" data-h="lifepick" role="dialog" aria-label={`人生の出来事：${st.label}。1つ選んでください`}>
+      <p className="pk-forkpick-head">
+        <b>■ 人生の出来事</b>　{st.label}（{s.profile.age + st.when}歳ごろ）　どれを選んでもかまいません
+      </p>
+      <ul className={`pk-forkpick-list n-${st.options.length}`}>
+        {st.options.map((o, i) => (
+          <li key={o} style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
+            <button type="button" onClick={() => setLife({ ...life, [st.key]: o })}>
+              <img src={pic(o)} alt="" className="is-person" />
+              <span className="pk-forkpick-txt">
+                <b>{o}</b>
+                <small>{lifeImpact(s.job, st.key, o)}</small>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 function LifeEvents({ c, s, life, setLife, partner, setPartner }: { c: Ctx; s: LifeState; life: LifeChoice; setLife: (l: LifeChoice) => void; partner: "m" | "f"; setPartner: (p: "m" | "f") => void }) {
   const open = LIFE_STEPS.filter((st, i) => (i === 0 || life[LIFE_STEPS[i - 1].key] || (st.key === "marry" && life.meet)) && (!st.needs || st.needs(life)));
@@ -1668,11 +1715,9 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
   const ai = AI_META[s.job.id];
   const ks = knowOf(s.job);
   const lvAt = (k: Know) => stageAt(k, s.forkIdx, s.forkIdx, null) + 1;
-  /* 道の太さ：活きる知識が多いほど太い（数字は出さない） */
-  const weight = (b: BranchId) => ks.reduce((n, k) => n + (k.fits[b].fit === "活きる" ? 2 : k.fits[b].fit === "少し活きる" ? 1 : 0), 0);
-  const ws = BRANCHES.map((b) => weight(b.id));
-  const max = Math.max(1, ...ws);
-  const band = (w: number) => (w >= max * 0.75 ? 2 : w >= max * 0.4 ? 1 : 0);
+  /* 道の太さ：場面の「スキル → 進める道」と同じ決め方（分かれ道の時点のスキルで比べる。数字は出さない） */
+  const rr = roadRank(s, Object.fromEntries(ks.map((k) => [k.id, Math.max(0, lvAt(k))])), new Set());
+  const tierOf = (b: BranchId) => 2 - (rr.find((x) => x.b.id === b)?.tier ?? 2);
   const pts = ai?.points.good.length ? ai.points : POINTS[s.job.id] ?? { good: [], care: [] };
   const unknown = karteOf(s.job).items.filter((i) => !i.value);
   const base = CHECKS[s.job.id] ?? [];
@@ -1691,7 +1736,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
       ...ks.map((k) => `・${k.name}　Lv.${lvAt(k)} ${LV_NAME[lvAt(k)]}${k.assumed ? "（仮定）" : ""}`),
       ``,
       `■ そのスキルで開ける道`,
-      ...BRANCHES.map((b, i) => `・${b.label}：${ROAD_WORD[band(ws[i])]}`),
+      ...rr.map(({ b }) => `・${b.label}：${ROAD_WORD[tierOf(b.id)]}`),
       ``,
       `■ 合いそうな所`,
       ...pts.good.map((x) => `・${x}`),
@@ -1766,8 +1811,8 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
           <p className="lf-h text-[17px]">② そのスキルで開ける道</p>
           <p className="mt-0.5 text-[12px] text-[var(--lf-sub)]">活きるスキルが多い道ほど太く描いています</p>
           <ul className="mt-3 grid gap-2">
-            {BRANCHES.map((b, i) => {
-              const k = band(ws[i]);
+            {rr.map(({ b }) => {
+              const k = tierOf(b.id);
               const good = ks.filter((x) => x.fits[b.id].fit === "活きる").map((x) => x.name);
               return (
                 <li key={b.id} className={`pk-take-road rw-${k}`}>
@@ -1809,7 +1854,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
               <p className="font-bold">あなたが入れた条件と比べると</p>
               <ul>
                 {s.profile.prefs.map((p) => {
-                  const hit = [...s.job.tags, ...s.job.body, ai?.text ?? ""].some((t) => t.includes(p.replace(/あり$|の支援$/, "")));
+                  const hit = [...s.job.tags, ...s.job.body, ai?.text ?? ""].some((t) => t.includes(p.endsWith("あり") ? p.slice(0, -2) : p.endsWith("の支援") ? p.slice(0, -3) : p));
                   return (
                     <li key={p}>
                       {hit ? "○" : "？"} {p}：{hit ? "求人の本文に書いてある" : "求人の本文からは分からない（面接で確かめる）"}
@@ -1918,12 +1963,13 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
   const [showGrowth, setShowGrowth] = useState(false);
   const [life, setLife] = useState<LifeChoice>({});
   const [partner, setPartner] = useState<"m" | "f">(c.look === "m" ? "f" : "m");
+  const lifeNow = lifePending(s, life);
   const pt = payTrendOf(s.prev, ch);
   const payNow = s.idx > s.forkIdx || s.atFork ? (s.branch && !s.detail ? BRANCH_PAY[s.branch] : pt) : null;
   const gains = gainsAt(s.job, s.idx, s.forkIdx, s.branch);
   const lvNow = Object.fromEntries(knowOf(s.job).map((k) => [k.id, stageAt(k, s.idx, s.forkIdx, s.branch) + 1]));
   const choosing = s.atFork && !s.branch;
-  const canAuto = speed !== "manual" && !s.atFork && !s.atEnd && !nextHidden && !!nextCh;
+  const canAuto = speed !== "manual" && !s.atFork && !s.atEnd && !nextHidden && !!nextCh && !lifeNow;
   /* 分かれ道に着いたら、道を選ぶ所までスクロールする（自動で進めていても、ここで止まって待つ） */
   useEffect(() => {
     if (!choosing) return;
@@ -1946,7 +1992,7 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
       </div>
       {c.fam === "g" ? <LifeLine c={c} s={s} horizon={horizon} onYearOne={onYearOne} life={life} /> : <RoadMap c={c} s={s} horizon={horizon} onYearOne={onYearOne} />}
       <div className={`pk-stagebox ${choosing ? "is-fork" : ""}`}>
-        <Stage key={`${s.idx}-${s.branch ?? ""}-${c.look}`} c={c} s={s} ch={ch} prev={s.prev} />
+        <Stage key={`${s.idx}-${s.branch ?? ""}-${c.look}`} c={c} s={s} ch={ch} prev={s.prev} overlay={lifeNow ? <LifePick c={c} s={s} st={lifeNow} life={life} setLife={setLife} partner={partner} /> : undefined} />
         {choosing && (
           <span className="pk-forkflag" aria-hidden>
             ◆ 分かれ道　ここで道を選んでください
@@ -1962,7 +2008,7 @@ function LaterLife({ c, s, horizon, setHorizon, onYearOne, speed, setSpeed }: { 
         <div className="grid min-w-0 content-start gap-4">
           {choosing && <ForkCall s={s} auto={speed !== "manual"} />}
           {s.atFork && <ForkDeal c={c} s={s} />}
-          {gains.length > 0 && <SkillRoads s={s} gained={gains.map((g) => ({ k: g.k, from: g.from + 1, to: g.to + 1 }))} lv={lvNow} title={`この場面で手に入れたスキル（${chapterLabel(ch, s.profile.age)}）`} />}
+          {gains.length > 0 && <SkillRoads c={c} s={s} gained={gains.map((g) => ({ k: g.k, from: g.from + 1, to: g.to + 1 }))} lv={lvNow} title={`この場面で手に入れたスキル（${chapterLabel(ch, s.profile.age)}）`} />}
           <ChapterStory s={s} ch={ch} />
           <AiRoad s={s} />
           {s.branch && s.branch !== "stay" && <StayCompare s={s} />}
@@ -2065,8 +2111,8 @@ function ChapterStory({ s, ch }: { s: LifeState; ch: Chapter }) {
   const gains = gainsAt(s.job, s.idx, s.forkIdx, s.branch);
   if (!gains.length) return null;
   const teacher = ch.talks.find((t) => ["boss", "senpai", "peer", "local", "student"].includes(t.who) && !(ch.vibes ?? []).some((v) => v.talk.text === t.text));
-  const selfLearn = ch.events.find((e) => /資格|勉強|手順書|学び|覚え/.test(e));
-  const wall = ch.cutin?.kind === "ピンチ" ? ch.cutin.line : ch.events.find((e) => /迷う|ずれ|ない|痛め|まちが/.test(e));
+  const selfLearn = ch.events.find((e) => ["資格", "勉強", "手順書", "学び", "覚え"].some((w) => e.includes(w)));
+  const wall = ch.cutin?.kind === "ピンチ" ? ch.cutin.line : ch.events.find((e) => ["迷う", "ずれ", "ない", "痛め", "まちが"].some((w) => e.includes(w)));
   const rows = [
     ch.events[0],
     wall ?? "大きな壁はない。いつもの仕事を続ける中で、少しずつ任される",
@@ -2349,7 +2395,7 @@ function LifeLine({ c, s, horizon = 99, onYearOne, life }: { c: Ctx; s: LifeStat
                   {(ch.vibes?.length ?? 0) > 0 && <span className="pk-node-rev" title="口コミ・会社情報が入った場面">口</span>}
                 </span>
                 <span className="pk-node-age">{chapterLabel(ch, start)}</span>
-                <span className="pk-node-sub">{ch.fork ? "◆分かれ道" : g.length ? `＋${g[0].k.name}` : ch.lifeEvent ? ch.lifeEvent.replace(/（.*?）/g, "") : PLACE_LABEL[ch.place]}</span>
+                <span className="pk-node-sub">{ch.fork ? "◆分かれ道" : g.length ? `＋${g[0].k.name}` : ch.lifeEvent ? ch.lifeEvent.split("（")[0] : PLACE_LABEL[ch.place]}</span>
               </button>
             </li>,
           ];
@@ -2502,7 +2548,7 @@ function cutArt(kind: CutKind, ch: Chapter, line: string): PackKey | "place" {
 }
 const CUT_EN: Record<CutKind, string> = { ほめられた: "GOOD JOB", ピンチ: "PINCH", 立ち上がる: "RISE AGAIN", 人生のできごと: "LIFE EVENT" };
 
-function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: Chapter }) {
+function Stage({ c, s, ch, prev, overlay }: { c: Ctx; s: LifeState; ch: Chapter; prev?: Chapter; overlay?: ReactNode }) {
   const reduced = usePrefersReducedMotion();
   const ups = changesOf(prev, ch, s.job).filter((u) => u.up);
   const shines: Know[] = shinesAt(s.job, s.idx, s.forkIdx, s.branch);
@@ -2574,6 +2620,7 @@ function Stage({ c, s, ch, prev }: { c: Ctx; s: LifeState; ch: Chapter; prev?: C
           </span>
         </div>
         {s.atFork && !s.branch && !intro && fx.phase === "done" && <ForkPick c={c} s={s} />}
+        {overlay && !intro && fx.phase === "done" && overlay}
         {ch.lifeEvent && (
           <div className="pk-event">
             <img src={art(c.style, eventArt(ch.lifeEvent))} alt="" />

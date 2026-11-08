@@ -123,7 +123,7 @@ ${text.slice(0, 6000)}`;
 const FITS: Fit[] = ["活きる", "少し活きる", "活きない"];
 const clamp = (n: unknown, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(Number(n) || 0)));
 const str = (v: unknown, d = "") => (typeof v === "string" && v.trim() ? v.trim() : d);
-const strOrNull = (v: unknown) => (typeof v === "string" && v.trim() && !/^(null|不明|なし)$/i.test(v.trim()) ? v.trim() : null);
+const strOrNull = (v: unknown) => (typeof v === "string" && v.trim() && !["null", "不明", "なし"].includes(v.trim().toLowerCase()) ? v.trim() : null);
 const fitOf = (v: unknown): AiFit => {
   const o = (v ?? {}) as { fit?: unknown; why?: unknown };
   const f = FITS.includes(o.fit as Fit) ? (o.fit as Fit) : "少し活きる";
