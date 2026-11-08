@@ -885,3 +885,50 @@ details[open] > summary .pk-open-hint { display: none; }
 .pk-final-rows i { font-style: normal; color: var(--lf-sub); }
 .pk-final-rows .is-up { color: #1b6b45; font-weight: 700; }
 .pk-cap-next:disabled { opacity: 0.35; cursor: default; }
+/* 人生の出来事のその後（11/8） */
+.pk-lifeafter-card { display: grid; grid-template-columns: 38% minmax(0, 1fr); gap: 2cqi; max-width: 82cqi; width: 100%; justify-self: center; padding: 1.6cqi; border-radius: 1.8cqi; background: var(--lf-card); color: var(--lf-ink); box-shadow: 0 0.6cqi 0 rgba(0,0,0,.35); animation: pk-evin .5s cubic-bezier(.3,1.5,.5,1) both; }
+.pk-lifeafter-pic { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0; min-height: 26cqi; border-radius: 1.2cqi; background: linear-gradient(#fbe6ec, #f4ece2); overflow: hidden; padding-top: 5cqi; }
+.pk-lifeafter-pic img { height: 24cqi; width: auto; object-fit: contain; }
+.pk-lifeafter-pic img.is-flip { transform: scaleX(-1); margin-left: -2cqi; }
+.pk-lifeafter-say { position: absolute; top: 0.8cqi; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 0.4cqi 1.4cqi; border-radius: 999px; background: #fff; border: 2px solid #2e2420; font-weight: 800; font-size: clamp(10px, 1.7cqi, 15px); }
+.pk-lifeafter-txt { display: grid; gap: 1cqi; align-content: center; min-width: 0; }
+.pk-lifeafter-txt > b { font-size: clamp(13px, 2.5cqi, 22px); line-height: 1.25; }
+.pk-lifeafter-txt dl { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 0.5cqi 1.2cqi; margin: 0; font-size: clamp(10px, 1.6cqi, 14px); line-height: 1.45; }
+.pk-lifeafter-txt dt { font-weight: 800; color: var(--lf-accent); white-space: nowrap; }
+.pk-lifeafter-txt dd { margin: 0; }
+.pk-lifeafter-next { justify-self: end; padding: 0.7cqi 2cqi; border-radius: 999px; background: var(--lf-accent); color: #fff; font-weight: 800; font-size: clamp(11px, 1.8cqi, 16px); }
+@media (max-width: 640px) {
+  .pk-lifeafter-card { grid-template-columns: 1fr; padding: 8px; gap: 6px; }
+  .pk-lifeafter-pic { min-height: 0; padding-top: 22px; }
+  .pk-lifeafter-pic img { height: 80px; }
+  .pk-lifeafter-txt dl { font-size: 11px; }
+}
+/* 持ち帰り：見出しと「できる」カード・1/3/5年の比べ（11/8） */
+.pk-can-head { font-size: clamp(19px, 2.6vw, 28px); font-weight: 800; line-height: 1.4; }
+.pk-can-head b { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--pk-hi, #ffd84d) 75%, transparent) 0); padding: 0 2px; }
+.pk-can-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px; }
+.pk-can-card { display: grid; gap: 4px; align-content: start; padding: 10px; border-radius: 14px; background: color-mix(in srgb, var(--lf-accent) 6%, var(--lf-card)); border: 1px solid color-mix(in srgb, var(--lf-ink) 10%, transparent); }
+.pk-can-pic { display: flex; align-items: flex-end; justify-content: center; height: 132px; border-radius: 10px; background-size: cover; background-position: center; background-color: #f4ece2; overflow: hidden; margin-bottom: 4px; }
+.pk-can-pic img { height: 118px; width: auto; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.pk-can-card b { font-size: 15.5px; line-height: 1.4; }
+.pk-can-card small { font-size: 12.5px; line-height: 1.5; color: var(--lf-sub); }
+.pk-can-card em { font-style: normal; font-size: 11.5px; color: var(--lf-sub); }
+.pk-yrs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.pk-yr-card { display: grid; gap: 4px; justify-items: center; text-align: center; padding: 10px 8px; border-radius: 14px; border: 2px solid color-mix(in srgb, var(--lf-ink) 12%, transparent); background: var(--lf-card); }
+.pk-yr-card.is-cur { border-color: var(--lf-accent); background: color-mix(in srgb, var(--lf-accent) 8%, var(--lf-card)); }
+.pk-yr-top { display: flex; gap: 6px; align-items: center; }
+.pk-yr-top b { font-size: 18px; }
+.pk-yr-top em { font-style: normal; font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--lf-accent); color: #fff; }
+.pk-yr-pic { display: flex; align-items: flex-end; justify-content: center; height: 110px; }
+.pk-yr-pic img { height: 104px; width: auto; }
+.pk-yr-pic img.is-flip { transform: scaleX(-1); margin-left: -10px; }
+.pk-yr-pos { font-weight: 800; font-size: 15px; }
+.pk-yr-line { font-size: 12.5px; line-height: 1.5; min-height: 3em; }
+.pk-take-lvwrap > summary { cursor: pointer; list-style: none; }
+.pk-take-lvwrap > summary::-webkit-details-marker { display: none; }
+@media (max-width: 640px) {
+  .pk-yrs { gap: 6px; }
+  .pk-yr-pic { height: 74px; } .pk-yr-pic img { height: 70px; }
+  .pk-yr-line { font-size: 11px; }
+  .pk-yr-card { padding: 8px 4px; }
+}

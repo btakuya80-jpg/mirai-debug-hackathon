@@ -398,3 +398,17 @@ export function shinesAt(job: Job, idx: number, forkIdx: number, branch: BranchI
   const j = idx - forkIdx - 1;
   return knowOf(job).filter((k) => k.shine?.[branch] === j);
 }
+
+/** 1年・3年・5年それぞれの分かれ道の時点の Lv（持ち帰り画面の比べ用。いまの年数の設定を変えない） */
+export function lvByYears(job: Job, y: Years): Record<string, number> {
+  return Object.fromEntries((KNOW[job.id] ?? []).map((k) => {
+    const a = atYears(job, k, y);
+    return [k.id, Math.max(0, a.grow[a.grow.length - 1] + 1)];
+  }));
+}
+/** Lv を「〜できる」の一言にする（名前が「〜る」で終わる時は「〜こと」にする） */
+export const nounOf = (name: string) => (name.endsWith("る") ? `${name}こと` : name);
+export function canSay(name: string, lv: number): string {
+  const n = nounOf(name);
+  return lv >= 4 ? `${n}を、人に教えられる` : lv === 3 ? `${n}を、任される` : lv === 2 ? `ひとりで、${n}ができる` : lv === 1 ? `${n}を、知っている` : `${n}は、まだこれから`;
+}
