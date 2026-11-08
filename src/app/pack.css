@@ -932,3 +932,5 @@ details[open] > summary .pk-open-hint { display: none; }
   .pk-yr-line { font-size: 11px; }
   .pk-yr-card { padding: 8px 4px; }
 }
+.pk-actor.is-newface { z-index: 3; }
+.pk-newface-name { position: absolute; left: 50%; bottom: -0.2cqi; transform: translateX(-50%); white-space: nowrap; padding: 0.1cqi 1cqi; border-radius: 999px; background: rgba(46,36,32,.82); color: #fff; font-size: clamp(9px, 1.35cqi, 12px); font-weight: 800; }

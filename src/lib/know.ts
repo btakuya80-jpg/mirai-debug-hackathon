@@ -407,7 +407,7 @@ export function lvByYears(job: Job, y: Years): Record<string, number> {
   }));
 }
 /** Lv を「〜できる」の一言にする（名前が「〜る」で終わる時は「〜こと」にする） */
-export const nounOf = (name: string) => (name.endsWith("る") ? `${name}こと` : name);
+export const nounOf = (name: string) => (["う", "く", "ぐ", "す", "つ", "ぬ", "ぶ", "む", "る"].some((x) => name.endsWith(x)) ? `${name}こと` : name);
 export function canSay(name: string, lv: number): string {
   const n = nounOf(name);
   return lv >= 4 ? `${n}を、人に教えられる` : lv === 3 ? `${n}を、任される` : lv === 2 ? `ひとりで、${n}ができる` : lv === 1 ? `${n}を、知っている` : `${n}は、まだこれから`;

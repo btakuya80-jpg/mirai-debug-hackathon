@@ -13,6 +13,7 @@ export const PACK_KEYS = [
   "me-m-genki", "me-m-futsu", "me-m-shindoi",
   "me-f-genki", "me-f-futsu", "me-f-shindoi",
   "boss", "senpai", "peer", "partner-m", "partner-f",
+  "newsenpai-genki", "newsenpai-futsu", "newsenpai-shindoi", "kohai-genki", "kohai-futsu", "kohai-shindoi",
   "bg-office", "bg-factory", "bg-construction", "bg-logistics", "bg-food",
   "cut-rankup", "cut-rise", "cut-fork",
   "ev-family", "ev-home", "ev-overseas", "ev-independent", "ev-relearn",
@@ -73,6 +74,13 @@ export function meArt(look: Look, mood: Mood): PackKey {
 export function whoArt(who: Who, look: Look, mood: Mood): PackKey | null {
   if (who === "me") return meArt(look, mood);
   if (who === "boss" || who === "senpai" || who === "peer") return who;
+  return null;
+}
+
+/** 選んだ道の場面だけに出る新しい人（新しい職場の先輩・後輩など。2026-11-08 Higgsfield で追加。g1 のみ） */
+export function newArt(who: Who, mood: Mood): PackKey | null {
+  if (who === "local") return `newsenpai-${MOOD_KEY[mood]}` as PackKey;
+  if (who === "student") return `kohai-${MOOD_KEY[mood]}` as PackKey;
   return null;
 }
 

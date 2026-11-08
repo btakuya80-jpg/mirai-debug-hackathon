@@ -46,7 +46,7 @@ import { usePrefersReducedMotion } from "@/lib/mirai";
 import type { Vibe } from "@/lib/reviews";
 import type { Place } from "@/lib/life";
 import { journeyLevels, journeyPre, journeyRoad, type JEpisode } from "@/lib/journey";
-import { PACKS, PLACE_ART, art, eventArt, meArt, whoArt, type Look, type PackKey, type StyleId } from "@/lib/packs";
+import { PACKS, PLACE_ART, art, eventArt, meArt, newArt, whoArt, type Look, type PackKey, type StyleId } from "@/lib/packs";
 
 type Fam = "g" | "h";
 type Ctx = { style: StyleId; fam: Fam; look: Look };
@@ -933,7 +933,13 @@ function Actors({ c, s, cast, prev, cur, talk, meMood, meAct, review, reduced, p
   const off = shown && !think ? ([shown.who, listener].find((w) => w && w !== "me" && cur[w] == null) ?? null) : null;
   return (
     <>
-      {off && (
+      {off && c.style === "g1" && SCENE_NAMES[off] && newArt(off, "普通") && (
+        <span className="pk-actor is-newface is-talking" style={{ left: "84%" }}>
+          <img src={art(c.style, newArt(off, shown?.who === off ? (meMood === "しんどい" ? "普通" : "元気") : "普通")!)} alt={nm(s.job, off)} style={{ ["--sx" as string]: -1 }} />
+          <b className="pk-newface-name">{nm(s.job, off)}</b>
+        </span>
+      )}
+      {off && !(c.style === "g1" && SCENE_NAMES[off] && newArt(off, "普通")) && (
         <span className="pk-offstage" style={{ left: "84%" }}>
           <span className="pk-offstage-face">
             <DrawnFace lv={1} who={off === "student" ? "student" : off === "family" ? "family" : "local"} />
@@ -1945,7 +1951,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
       `${s.job.company}「${s.job.title}」　${ai ? "（Claude が求人の本文から読み取ったシナリオ）" : "（見本の求人・架空）"}`,
       `これは試走したシナリオの一つで、未来を約束するものではありません。`,
       ``,
-      `この会社で${s.years}年働くと、${canTop.slice(0, 2).map((k) => nounOf(k.name)).join("と")}ができるようになる（筋書き）`,
+      `この会社で${s.years}年働くと、${canTop.slice(0, 2).map((k) => `「${nounOf(k.name)}」`).join("と")}ができるようになる（筋書き）`,
       ...canTop.map((k) => `・${canSay(k.name, lvNow[k.id] ?? 0)}`),
       ``,
       `■ この会社で身につく専門スキル（入社${s.years}年後）`,
@@ -1997,7 +2003,7 @@ function Takeaway({ c, s }: { c: Ctx; s: LifeState }) {
 
       <div className="lf-card pk-can p-5 sm:p-6" data-h="take-can">
         <p className="pk-can-head">
-          この会社で{s.years}年働くと、あなたは<b>{canTop.slice(0, 2).map((k) => nounOf(k.name)).join("と")}</b>ができるようになる
+          この会社で{s.years}年働くと、あなたは<b>{canTop.slice(0, 2).map((k) => `「${nounOf(k.name)}」`).join("と")}</b>ができるようになる
         </p>
         <ul className="pk-can-cards">
           {canTop.map((k) => {
