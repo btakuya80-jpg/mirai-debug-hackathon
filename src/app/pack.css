@@ -934,3 +934,4 @@ details[open] > summary .pk-open-hint { display: none; }
 }
 .pk-actor.is-newface { z-index: 3; }
 .pk-newface-name { position: absolute; left: 50%; bottom: -0.2cqi; transform: translateX(-50%); white-space: nowrap; padding: 0.1cqi 1cqi; border-radius: 999px; background: rgba(46,36,32,.82); color: #fff; font-size: clamp(9px, 1.35cqi, 12px); font-weight: 800; }
+.pk-ts-note { margin-top: 0.6cqi; padding: 0.4cqi 1.6cqi; border-radius: 999px; background: rgba(255, 248, 214, 0.95); color: #5a4400; font-weight: 700; font-size: clamp(10px, 1.6cqi, 14px); animation: pk-in 0.5s 0.3s both; }

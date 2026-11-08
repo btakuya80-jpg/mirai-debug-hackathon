@@ -730,6 +730,7 @@ function Journey({ c, s, speed, setSpeed }: { c: Ctx; s: LifeState; speed: Speed
         </h1>
         <YearsSwitch s={s} thin />
       </div>
+      <PromiseNote />
       <JourneyLine c={c} s={s} eps={eps} preLen={pre.length} cur={e} beat={beat} onPick={(i) => setPos({ e: i, beat: 0 })} />
       <EpisodeStage key={`${ep.id}-${c.look}`} c={c} s={s} ep={ep} prev={eps[e - 1]} beat={beat} vibes={vibes} speed={speed} setSpeed={setSpeed} onBeat={goBeat} overlay={overlay} age={age} />
       {beat === 4 && speed !== "manual" && !overlay && !end && (
@@ -1071,6 +1072,7 @@ function EpisodeStage({ c, s, ep, prev, beat, vibes, speed, setSpeed, onBeat, ov
             </span>
             <span className="pk-ts-mean">{ep.mean}</span>
             <span className="pk-ts-bar" aria-hidden />
+            {!prev && <span className="pk-ts-note">これは試走したシナリオの一つで、未来を約束するものではありません。</span>}
           </button>
         )}
       </div>
