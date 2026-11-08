@@ -870,3 +870,18 @@ details[open] > summary .pk-open-hint { display: none; }
 .pk-forkpick-list img.is-person { aspect-ratio: 3 / 4; object-fit: contain; object-position: bottom; background: #f4ece2; }
 .pk-forkpick.is-life .pk-forkpick-txt small { -webkit-line-clamp: 4; }
 .pk-stagebox:has(.pk-forkpick.is-life) .pk-forkflag { display: none; }
+
+/* ---------- 2026-11-08 1本道 ---------- */
+.pk-lvextra { margin-top: 6px; font-size: clamp(10px, 1.5cqi, 13px); font-weight: 700; opacity: 0.9; }
+.pk-offstage { display: grid; justify-items: center; gap: 2px; }
+.pk-offstage-face { display: block; width: 7cqi; height: 7cqi; min-width: 40px; min-height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+.pk-forkpick-txt b i { margin-left: 6px; font-style: normal; font-size: 0.62em; font-weight: 800; color: var(--lf-sub); }
+.pk-forkpick-txt .pk-skr-band { margin: 2px 0; }
+.pk-forkpick-list button.tier-0 { border-color: #1f8a5b; }
+.pk-final { border: 2px solid var(--lf-accent); }
+.pk-final-rows { display: grid; gap: 6px; }
+.pk-final-rows li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 13.5px; padding: 6px 10px; border-radius: 10px; background: var(--lf-bg); }
+.pk-final-rows li > b { min-width: 9em; }
+.pk-final-rows i { font-style: normal; color: var(--lf-sub); }
+.pk-final-rows .is-up { color: #1b6b45; font-weight: 700; }
+.pk-cap-next:disabled { opacity: 0.35; cursor: default; }
